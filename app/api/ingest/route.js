@@ -119,69 +119,8 @@ export async function POST(request) {
 
       return NextResponse.json({ success: true, transactions });
     }
-
-    // --- PDF PARSING (Using LLM for unstructured data) ---
-    if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
-      // Import directly from lib to bypass index.js which tries to load a test file in Next.js/Turbopack
-      const pdfParse = require("pdf-parse/lib/pdf-parse.js");
-      const pdfData = await pdfParse(buffer);
-      
-      // Limit text to ~10,000 characters to prevent 16k output token limits (Unterminated JSON error)
-      const safeText = pdfData.text.substring(0, 10000); 
-      
-      const prompt = `
-        You are a precise financial data extraction engine.
-        Below is raw text extracted from a bank statement PDF.
-        Extract ALL transactions found in this text and return them as a JSON array of objects.
-        
-        IMPORTANT RULES:
-        1. Base the transaction date strictly on the details inside the row itself, NOT on the file title.
-        2. Dates must be formatted as YYYY-MM-DD.
-        3. For "amount", return a positive number for income/credits, and a negative number for expenses/debits.
-        4. Infer a short, professional "category" based on the description (e.g., "Food & Dining", "Transportation", "Income").
-        5. "description" should be a cleaned up version of the raw details.
-        6. "original_details" should contain the raw, unedited line of text.
-
-        Return ONLY valid JSON in this structure:
-        {
-          "transactions": [
-            {
-              "date": "YYYY-MM-DD",
-              "description": "Cleaned description",
-              "category": "Inferred Category",
-              "amount": -125.50,
-              "original_details": "Raw text line here"
-            }
-          ]
-        }
-        
-        Raw Data:
-        ${safeText} 
-      `;
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-        temperature: 0.1,
-      });
-
-      const resultText = response.choices[0].message.content;
-      
-      try {
-        const parsedData = JSON.parse(resultText);
-        return NextResponse.json({ 
-          success: true, 
-          transactions: parsedData.transactions || []
-        });
-      } catch (parseError) {
-        // If it still cuts off, we can try to recover by appending ]} but throwing is safer for now
-        throw new Error("JSON parsing failed, document may be too large. Try uploading a CSV or a shorter PDF.");
-      }
-    }
-
     return NextResponse.json(
-      { error: "Unsupported file type. Please upload a CSV or PDF." },
+      { error: "Unsupported file type. Please upload a CSV." },
       { status: 400 }
     );
 
