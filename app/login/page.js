@@ -74,9 +74,8 @@ export default function LoginPage() {
 
         <div>
           <div className="flex items-center justify-between mb-12">
-            <div className="flex items-center gap-2 font-bold text-4xl tracking-tight text-[var(--color-foreground)]">
-              <img src="/FinacleLogo.png" alt="Finacle Logo" className="w-14 h-14 rounded-lg object-cover" />
-              Finacle
+            <div className="flex items-center">
+              <img src="/FinacleLogo.png" alt="Finacle Logo" className="w-40 h-auto object-contain" />
             </div>
             <div className="md:hidden">
               <ThemeToggle />

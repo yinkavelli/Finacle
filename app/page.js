@@ -166,9 +166,8 @@ export default function Home() {
       {/* Sidebar */}
       <aside className="w-64 border-r border-[var(--color-card-border)] bg-[var(--color-background)] flex flex-col hidden md:flex z-10 relative">
         <div className="p-6">
-          <div className="flex items-center gap-2 font-bold text-3xl tracking-tight text-[var(--color-foreground)]">
-            <img src="/FinacleLogo.png" alt="Finacle Logo" className="w-12 h-12 rounded-lg object-cover" />
-            Finacle
+          <div className="flex items-center">
+            <img src="/FinacleLogo.png" alt="Finacle Logo" className="w-32 h-auto object-contain" />
           </div>
         </div>
         
