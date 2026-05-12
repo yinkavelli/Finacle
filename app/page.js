@@ -365,7 +365,7 @@ function MetricCard({ title, amount, subtitle, icon, variant = 'indigo', subtitl
   const colors = colorMap[variant] || colorMap.indigo;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border ${colors.cardGrad} p-3 md:p-4 transition-all duration-200 hover:scale-[0.98] active:scale-95 cursor-pointer group`}>
+    <div className={`relative overflow-hidden rounded-2xl border ${colors.cardGrad} dark:bg-gradient-to-br p-3 md:p-4 transition-all duration-200 hover:scale-[0.98] active:scale-95 cursor-pointer group`}>
       <div className={`shimmer-overlay ${colors.shimmer}`}></div>
       
       <div className="relative z-10">
