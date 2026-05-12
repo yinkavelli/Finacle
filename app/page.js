@@ -52,6 +52,30 @@ const transactions = [
   { id: 5, date: '2026-05-08', description: 'Electric Bill', category: 'Utilities', amount: -85.20, status: 'Completed' },
 ];
 
+const formatCurrency = (amount, currencyCode, showPlus = false) => {
+  const isNegative = amount < 0;
+  const isPositive = amount > 0;
+  const absAmount = Math.abs(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const prefix = isNegative ? '-' : (showPlus && isPositive ? '+' : '');
+  
+  if (currencyCode === 'AED') {
+    return (
+      <span className="inline-flex items-center">
+        {prefix}
+        <svg width="0.85em" height="0.85em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="inline-block relative -top-[1px] mx-[2px] opacity-90">
+          <path d="M8 4v16" />
+          <path d="M8 4h5a7 7 0 0 1 0 14H8" />
+          <path d="M5 10h11" />
+          <path d="M5 14h11" />
+        </svg>
+        {absAmount}
+      </span>
+    );
+  }
+  
+  return prefix + Math.abs(amount).toLocaleString('en-US', { style: 'currency', currency: currencyCode }).replace('-', '');
+};
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [txList, setTxList] = useState(transactions);
@@ -173,7 +197,7 @@ export default function Home() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                 <MetricCard 
                   title="Total Balance" 
-                  amount={(12450).toLocaleString('en-US', { style: 'currency', currency })} 
+                  amount={formatCurrency(12450, currency)} 
                   subtitle="↑ +2.4% vs last month" 
                   subtitleColor="up" 
                   variant="indigo" 
@@ -181,7 +205,7 @@ export default function Home() {
                 />
                 <MetricCard 
                   title="Monthly Spending" 
-                  amount={(2850).toLocaleString('en-US', { style: 'currency', currency })} 
+                  amount={formatCurrency(2850, currency)} 
                   subtitle="↓ -5.1% vs last month" 
                   subtitleColor="down" 
                   variant="emerald" 
@@ -189,7 +213,7 @@ export default function Home() {
                 />
                 <MetricCard 
                   title="Savings Target" 
-                  amount={(1150).toLocaleString('en-US', { style: 'currency', currency })} 
+                  amount={formatCurrency(1150, currency)} 
                   subtitle="On Track" 
                   subtitleColor="neutral" 
                   variant="violet" 
@@ -335,7 +359,7 @@ export default function Home() {
                           </div>
                         </div>
                         <div className={`text-sm font-semibold ${tx.amount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
-                          {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('en-US', { style: 'currency', currency })}
+                          {formatCurrency(tx.amount, currency, true)}
                         </div>
                       </div>
                     ))}
@@ -370,7 +394,7 @@ export default function Home() {
                             </td>
                             <td className="py-2 md:py-4 text-xs md:text-sm opacity-80 hidden sm:table-cell">{tx.status}</td>
                             <td className={`py-2 md:py-4 text-right text-sm md:text-base font-semibold whitespace-nowrap ${tx.amount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
-                              {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('en-US', { style: 'currency', currency })}
+                              {formatCurrency(tx.amount, currency, true)}
                             </td>
                           </tr>
                         ))}
