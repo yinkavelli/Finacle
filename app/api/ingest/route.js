@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import Papa from "papaparse";
 
+// Polyfill DOMMatrix for pdf-parse in Next.js Server environments
+if (typeof global.DOMMatrix === 'undefined') {
+  global.DOMMatrix = class DOMMatrix {};
+}
+
 export async function POST(request) {
   try {
     const openai = new OpenAI({
@@ -47,8 +52,11 @@ export async function POST(request) {
              let cleanDesc = details
                 .replace(/CARD TRANSACTION|TRANSFER|PURCH|V DEBIT|ATM|UAESWCH|OW IPP RTP|PYMT/gi, '')
                 .replace(/\d{2}[A-Za-z]{3}\d{2}/g, '') // e.g. 21APR26
-                .replace(/Card Ending with \d{4}/ig, '')
-                .replace(/[A-Z0-9]{10,}/g, '') // Long alphanumeric references like A89574520
+                .replace(/Card Endi[a-z\s]*\d*/ig, '') // Catch "Card Endi" or "Card Ending with 6338"
+                .replace(/\d{6}[A-Z]{3}/g, '') // e.g. 004974AED
+                .replace(/\b\d+\.\d{2}\b/g, '') // e.g. 100.00
+                .replace(/[A-Z0-9]{9,}/g, '') // Long alphanumeric references like A89574520
+                .replace(/NFC\s*\(AP-PAY\)/ig, '')
                 .replace(/\s{2,}/g, ' ')
                 .trim();
                 
