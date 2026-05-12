@@ -1,0 +1,368 @@
+"use client";
+
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { 
+  LayoutDashboard, 
+  WalletCards, 
+  PieChart as ChartIcon, 
+  Bot, 
+  Settings, 
+  Plus,
+  ArrowUpRight,
+  ArrowDownRight
+} from "lucide-react";
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid
+} from "recharts";
+import { useState } from "react";
+
+// Realistic Dummy Data
+const expensesData = [
+  { name: 'Housing', value: 1500, color: '#3b82f6' },
+  { name: 'Food', value: 600, color: '#10b981' },
+  { name: 'Transport', value: 300, color: '#f59e0b' },
+  { name: 'Entertainment', value: 250, color: '#8b5cf6' },
+  { name: 'Utilities', value: 200, color: '#ec4899' },
+];
+
+const barData = [
+  { name: 'Mon', spent: 120 },
+  { name: 'Tue', spent: 45 },
+  { name: 'Wed', spent: 80 },
+  { name: 'Thu', spent: 210 },
+  { name: 'Fri', spent: 90 },
+  { name: 'Sat', spent: 300 },
+  { name: 'Sun', spent: 150 },
+];
+
+const transactions = [
+  { id: 1, date: '2026-05-12', description: 'Whole Foods Market', category: 'Food', amount: -124.50, status: 'Completed' },
+  { id: 2, date: '2026-05-11', description: 'Uber Rides', category: 'Transport', amount: -24.90, status: 'Completed' },
+  { id: 3, date: '2026-05-10', description: 'Netflix Subscription', category: 'Entertainment', amount: -15.99, status: 'Completed' },
+  { id: 4, date: '2026-05-09', description: 'Salary Deposit', category: 'Income', amount: 4500.00, status: 'Completed' },
+  { id: 5, date: '2026-05-08', description: 'Electric Bill', category: 'Utilities', amount: -85.20, status: 'Completed' },
+];
+
+export default function Home() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <aside className="w-64 border-r border-[var(--color-card-border)] bg-[var(--color-background)] flex flex-col hidden md:flex z-10 relative">
+        <div className="p-6">
+          <div className="flex items-center gap-2 font-bold text-2xl tracking-tight text-[var(--color-foreground)]">
+            <div className="w-8 h-8 rounded-lg bg-[var(--color-accent-primary)] flex items-center justify-center text-white">
+              F
+            </div>
+            Finacle
+          </div>
+        </div>
+        
+        <nav className="flex-1 px-4 space-y-2 mt-4">
+          <NavItem icon={<LayoutDashboard size={20}/>} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+          <NavItem icon={<WalletCards size={20}/>} label="Transactions" active={activeTab === 'transactions'} onClick={() => setActiveTab('transactions')} />
+          <NavItem icon={<ChartIcon size={20}/>} label="Analytics" active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
+          <NavItem icon={<Bot size={20}/>} label="AI Advisor" active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
+        </nav>
+
+        <div className="p-4 border-t border-[var(--color-card-border)]">
+          <NavItem icon={<Settings size={20}/>} label="Settings" />
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col relative overflow-y-auto">
+        {/* Header */}
+        <header className="pt-6 pb-4 min-h-[5.5rem] border-b border-[var(--color-card-border)] flex items-center justify-between px-8 sticky top-0 z-20 backdrop-blur-xl bg-[var(--color-background)]/80">
+          <h1 className="text-xl font-semibold dark:text-white text-slate-900">Overview</h1>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <button className="relative overflow-hidden flex items-center gap-2 border dark:border-indigo-500/50 border-indigo-200 bg-gradient-to-br dark:from-indigo-600 dark:to-indigo-900 from-indigo-500 to-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-[0_4px_24px_rgba(99,102,241,0.3)] dark:shadow-[0_4px_24px_rgba(99,102,241,0.5)] hover:scale-[1.02] active:scale-95 transition-all group">
+              <div className="shimmer-overlay shimmer-overlay-indigo"></div>
+              <Plus size={18} className="relative z-10" />
+              <span className="relative z-10">Add Expense</span>
+            </button>
+            <div className="w-10 h-10 rounded-full bg-slate-300 border-2 dark:border-indigo-500 border-indigo-300 overflow-hidden shadow-lg">
+              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" />
+            </div>
+          </div>
+        </header>
+
+        {/* Dashboard Content */}
+        <div className="p-8 max-w-7xl mx-auto w-full space-y-8">
+          
+          {/* Top Metrics Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <MetricCard 
+              title="Total Balance" 
+              amount="$12,450.00" 
+              subtitle="↑ +2.4% vs last month" 
+              subtitleColor="up" 
+              variant="indigo" 
+              icon={<ArrowUpRight size={18} strokeWidth={2.5} />} 
+            />
+            <MetricCard 
+              title="Monthly Spending" 
+              amount="$2,850.00" 
+              subtitle="↓ -5.1% vs last month" 
+              subtitleColor="down" 
+              variant="emerald" 
+              icon={<ArrowDownRight size={18} strokeWidth={2.5} />} 
+            />
+            <MetricCard 
+              title="Savings Target" 
+              amount="$1,150.00" 
+              subtitle="On Track" 
+              subtitleColor="neutral" 
+              variant="violet" 
+              icon={<LayoutDashboard size={18} strokeWidth={2.5} />} 
+            />
+          </div>
+
+          {/* AI Insights Card */}
+          <div className="relative overflow-hidden rounded-2xl border border-emerald-500/50 bg-slate-950 bg-gradient-to-br from-emerald-900/40 to-emerald-950/20 p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex gap-4 items-start group">
+            <div className="shimmer-overlay shimmer-overlay-emerald"></div>
+            <div className="absolute top-0 left-0 w-1 h-full bg-[var(--color-accent-positive)]"></div>
+            <div className="relative z-10 flex gap-4 w-full">
+              <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
+                <Bot size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-1 text-white">AI Financial Insight</h3>
+                <p className="text-slate-300 leading-relaxed text-sm">
+                  You've spent 20% less on Food & Dining this week compared to last week. If you maintain this trend, you could save an additional $140 by the end of the month. Great job!
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Pie Chart */}
+            <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+              <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
+              <div className="relative z-10">
+                <h3 className="text-lg font-semibold mb-6 text-white">Spending Breakdown</h3>
+                <div className="h-64 relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <defs>
+                        <linearGradient id="gradHousing" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#60a5fa" />
+                          <stop offset="100%" stopColor="#1d4ed8" />
+                        </linearGradient>
+                        <linearGradient id="gradFood" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#34d399" />
+                          <stop offset="100%" stopColor="#047857" />
+                        </linearGradient>
+                        <linearGradient id="gradTransport" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#fbbf24" />
+                          <stop offset="100%" stopColor="#b45309" />
+                        </linearGradient>
+                        <linearGradient id="gradEntertainment" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#a78bfa" />
+                          <stop offset="100%" stopColor="#5b21b6" />
+                        </linearGradient>
+                        <linearGradient id="gradUtilities" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#f472b6" />
+                          <stop offset="100%" stopColor="#be185d" />
+                        </linearGradient>
+                      </defs>
+                      <Pie
+                        data={expensesData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                        stroke="rgba(255,255,255,0.1)"
+                        strokeWidth={2}
+                      >
+                        <Cell fill="url(#gradHousing)" />
+                        <Cell fill="url(#gradFood)" />
+                        <Cell fill="url(#gradTransport)" />
+                        <Cell fill="url(#gradEntertainment)" />
+                        <Cell fill="url(#gradUtilities)" />
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(99, 102, 241, 0.5)', borderRadius: '12px', backdropFilter: 'blur(10px)', color: '#fff' }}
+                        itemStyle={{ color: '#fff' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap gap-4 justify-center mt-4">
+                  {expensesData.map((item, idx) => (
+                    <div key={item.name} className="flex items-center gap-2 text-sm text-slate-300">
+                      <span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${item.color}, transparent)` }}></span>
+                      <span>{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Bar Chart */}
+            <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+              <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
+              <div className="relative z-10">
+                <h3 className="text-lg font-semibold mb-6 text-white">Weekly Activity</h3>
+                <div className="h-64 relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={barData}>
+                      <defs>
+                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#818cf8" />
+                          <stop offset="100%" stopColor="#3730a3" stopOpacity={0.8} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} axisLine={false} tickLine={false} />
+                      <YAxis stroke="#94a3b8" fontSize={12} axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} />
+                      <Tooltip 
+                        cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
+                        contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(99, 102, 241, 0.5)', borderRadius: '12px', color: '#fff' }}
+                      />
+                      <Bar dataKey="spent" fill="url(#barGradient)" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Transactions */}
+          <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+            <div className="shimmer-overlay shimmer-overlay-indigo opacity-30"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-white">Recent Transactions</h3>
+                <button className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">View All</button>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
+                      <th className="pb-3 font-medium">Date</th>
+                      <th className="pb-3 font-medium">Description</th>
+                      <th className="pb-3 font-medium">Category</th>
+                      <th className="pb-3 font-medium">Status</th>
+                      <th className="pb-3 font-medium text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-slate-300">
+                    {transactions.map((tx) => (
+                      <tr key={tx.id} className="border-b border-slate-800/50 last:border-0 hover:bg-white/5 transition-colors group cursor-pointer">
+                        <td className="py-4 text-sm opacity-80">{tx.date}</td>
+                        <td className="py-4 font-medium text-white group-hover:text-indigo-400 transition-colors">{tx.description}</td>
+                        <td className="py-4">
+                          <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">
+                            {tx.category}
+                          </span>
+                        </td>
+                        <td className="py-4 text-sm opacity-80">{tx.status}</td>
+                        <td className={`py-4 text-right font-semibold ${tx.amount > 0 ? 'text-emerald-400' : ''}`}>
+                          {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// Subcomponents
+function NavItem({ icon, label, active, onClick }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 font-medium ${
+        active 
+          ? 'bg-[var(--color-accent-primary)]/10 text-[var(--color-accent-primary)]' 
+          : 'text-[var(--color-foreground)] opacity-70 hover:opacity-100 hover:bg-[var(--color-card-border)]/50'
+      }`}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function MetricCard({ title, amount, subtitle, icon, variant = 'indigo', subtitleColor = 'neutral' }) {
+  const colorMap = {
+    indigo: {
+      cardGrad: 'bg-slate-950 from-indigo-900/40 to-indigo-950/20',
+      border: 'border-indigo-500/50',
+      iconBg: 'bg-indigo-500/20',
+      iconText: 'text-indigo-400',
+      shimmer: 'shimmer-overlay-indigo'
+    },
+    emerald: {
+      cardGrad: 'bg-slate-950 from-emerald-900/40 to-emerald-950/20',
+      border: 'border-emerald-500/50',
+      iconBg: 'bg-emerald-500/20',
+      iconText: 'text-emerald-400',
+      shimmer: 'shimmer-overlay-emerald'
+    },
+    violet: {
+      cardGrad: 'bg-slate-950 from-violet-900/40 to-violet-950/20',
+      border: 'border-violet-500/50',
+      iconBg: 'bg-violet-500/20',
+      iconText: 'text-violet-400',
+      shimmer: 'shimmer-overlay-violet'
+    }
+  };
+
+  const stMap = {
+    up: 'text-emerald-400',
+    down: 'text-red-400',
+    neutral: 'text-slate-400'
+  };
+
+  const colors = colorMap[variant] || colorMap.indigo;
+
+  return (
+    <div className={`relative overflow-hidden rounded-2xl border ${colors.border} bg-gradient-to-br ${colors.cardGrad} p-4 shadow-[0_4px_24px_rgba(0,0,0,0.4)] transition-all duration-200 hover:scale-[0.98] active:scale-95 cursor-pointer group`}>
+      <div className={`shimmer-overlay ${colors.shimmer}`}></div>
+      
+      <div className="relative z-10">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-baseline gap-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">{title}</span>
+            <span className="text-[9px] font-medium text-indigo-400/70 opacity-0 group-hover:opacity-100 transition-opacity">tap</span>
+          </div>
+          <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${colors.iconBg} ${colors.iconText}`}>
+            {icon}
+          </div>
+        </div>
+        
+        <div className="mb-1 font-sans text-3xl font-bold tracking-tight text-white">
+          {amount}
+        </div>
+        
+        <div className={`text-xs font-medium ${stMap[subtitleColor]}`}>
+          {subtitle}
+        </div>
+      </div>
+    </div>
+  );
+}
