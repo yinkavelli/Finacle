@@ -65,29 +65,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes shimmerBg {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .shimmer-bg {
-          background-size: 200% 200%;
-          animation: shimmerBg 15s ease infinite;
-        }
-        .noise-texture {
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          opacity: 0.4;
-          mix-blend-mode: overlay;
-          pointer-events: none;
-        }
-        .dark .noise-texture {
-          opacity: 0.15;
-          mix-blend-mode: color-dodge;
-        }
-      `}} />
-      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6 bg-gradient-to-br from-[#f8fafc] via-[#e2e8f0] to-[#f8fafc] dark:from-[#060812] dark:via-[#111827] dark:to-[#060812] shimmer-bg">
-        <div className="absolute inset-0 noise-texture z-0"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#fdfdfd] dark:bg-[#060812] relative overflow-hidden px-6">
         {/* Background decorative elements matching mockup */}
         <div className="absolute top-0 right-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
           {/* Subtle top-right glow to simulate the sweeping curve in the dark mode mockup */}
@@ -101,7 +79,7 @@ export default function LoginPage() {
 
         <div className="w-full max-w-[340px] flex flex-col items-center z-10">
           {/* Logo Section */}
-          <div className="flex flex-col items-center mb-12">
+          <div className="flex flex-col items-center mb-6 pt-4">
             <img src="/logo-light.png" alt="Finacle Logo" className="w-72 md:w-80 h-auto object-contain dark:hidden" />
             <img src="/logo-dark.png" alt="Finacle Logo" className="w-72 md:w-80 h-auto object-contain hidden dark:block" />
           </div>

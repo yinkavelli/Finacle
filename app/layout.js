@@ -1,6 +1,5 @@
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import { ChatWidget } from "@/components/ChatWidget";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,7 +18,6 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col font-sans overscroll-none">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
-          <ChatWidget />
         </ThemeProvider>
       </body>
     </html>

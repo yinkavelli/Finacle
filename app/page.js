@@ -1,6 +1,7 @@
 "use client";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ChatWidget } from "@/components/ChatWidget";
 import { 
   LayoutDashboard, 
   WalletCards, 
@@ -480,6 +481,7 @@ export default function Home() {
           </div>
         </nav>
       </main>
+      <ChatWidget />
     </div>
   );
 }
