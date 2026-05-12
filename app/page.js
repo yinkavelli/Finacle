@@ -56,6 +56,8 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [txList, setTxList] = useState(transactions);
   const [isUploading, setIsUploading] = useState(false);
+  const [currency, setCurrency] = useState('AED');
+  const [uploadProgress, setUploadProgress] = useState('');
   const fileInputRef = useRef(null);
 
   const handleFileUpload = async (e) => {
@@ -63,6 +65,7 @@ export default function Home() {
     if (!file) return;
 
     setIsUploading(true);
+    setUploadProgress("Reading & AI Parsing...");
     const formData = new FormData();
     formData.append("file", file);
 
@@ -73,6 +76,7 @@ export default function Home() {
       });
       const data = await res.json();
       if (data.success) {
+        setUploadProgress("Updating Dashboard...");
         const newTxs = data.transactions.map((t, i) => ({
           id: Date.now() + i,
           date: t.date,
@@ -90,6 +94,7 @@ export default function Home() {
       alert("Error uploading document");
     } finally {
       setIsUploading(false);
+      setUploadProgress("");
       // reset file input
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
@@ -126,6 +131,12 @@ export default function Home() {
         <header className="pt-4 pb-3 md:pt-6 md:pb-4 min-h-[4.5rem] md:min-h-[5.5rem] border-b border-[var(--color-card-border)] flex items-center justify-between px-4 md:px-8 sticky top-0 z-20 backdrop-blur-xl bg-[var(--color-background)]/80">
           <h1 className="text-lg md:text-xl font-semibold dark:text-white text-slate-900">Overview</h1>
           <div className="flex items-center gap-3 md:gap-4">
+            <button 
+              onClick={() => setCurrency(currency === 'USD' ? 'AED' : 'USD')}
+              className="px-2 py-1.5 md:px-3 md:py-2 rounded-xl text-xs md:text-sm font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            >
+              {currency}
+            </button>
             <ThemeToggle />
             <button 
               onClick={() => fileInputRef.current?.click()}
@@ -134,7 +145,7 @@ export default function Home() {
             >
               <div className="shimmer-overlay shimmer-overlay-indigo"></div>
               <Plus size={16} className={`relative z-10 md:w-[18px] md:h-[18px] ${isUploading ? 'animate-spin' : ''}`} />
-              <span className="relative z-10 hidden sm:inline">{isUploading ? 'Ingesting...' : 'Upload Statement'}</span>
+              <span className="relative z-10 hidden sm:inline">{isUploading ? uploadProgress || 'Processing...' : 'Upload Statement'}</span>
               <span className="relative z-10 inline sm:hidden">{isUploading ? '...' : 'Upload'}</span>
             </button>
             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-300 border-2 dark:border-indigo-500 border-indigo-300 overflow-hidden shadow-lg">
@@ -150,7 +161,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             <MetricCard 
               title="Total Balance" 
-              amount="$12,450.00" 
+              amount={(12450).toLocaleString('en-US', { style: 'currency', currency })} 
               subtitle="↑ +2.4% vs last month" 
               subtitleColor="up" 
               variant="indigo" 
@@ -158,7 +169,7 @@ export default function Home() {
             />
             <MetricCard 
               title="Monthly Spending" 
-              amount="$2,850.00" 
+              amount={(2850).toLocaleString('en-US', { style: 'currency', currency })} 
               subtitle="↓ -5.1% vs last month" 
               subtitleColor="down" 
               variant="emerald" 
@@ -166,7 +177,7 @@ export default function Home() {
             />
             <MetricCard 
               title="Savings Target" 
-              amount="$1,150.00" 
+              amount={(1150).toLocaleString('en-US', { style: 'currency', currency })} 
               subtitle="On Track" 
               subtitleColor="neutral" 
               variant="violet" 
@@ -319,7 +330,7 @@ export default function Home() {
                       </div>
                     </div>
                     <div className={`text-sm font-semibold ${tx.amount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
-                      {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                      {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('en-US', { style: 'currency', currency })}
                     </div>
                   </div>
                 ))}
@@ -349,7 +360,7 @@ export default function Home() {
                         </td>
                         <td className="py-2 md:py-4 text-xs md:text-sm opacity-80 hidden sm:table-cell">{tx.status}</td>
                         <td className={`py-2 md:py-4 text-right text-sm md:text-base font-semibold whitespace-nowrap ${tx.amount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
-                          {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                          {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('en-US', { style: 'currency', currency })}
                         </td>
                       </tr>
                     ))}
