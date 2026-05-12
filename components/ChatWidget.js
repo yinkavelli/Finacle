@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { MessageSquare, X, Send, Bot, User } from "lucide-react";
 
 export function ChatWidget() {
