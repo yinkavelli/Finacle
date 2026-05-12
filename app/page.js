@@ -23,34 +23,11 @@ import {
   YAxis,
   CartesianGrid
 } from "recharts";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
-// Realistic Dummy Data
-const expensesData = [
-  { name: 'Housing', value: 1500, color: '#3b82f6' },
-  { name: 'Food', value: 600, color: '#10b981' },
-  { name: 'Transport', value: 300, color: '#f59e0b' },
-  { name: 'Entertainment', value: 250, color: '#8b5cf6' },
-  { name: 'Utilities', value: 200, color: '#ec4899' },
-];
 
-const barData = [
-  { name: 'Mon', spent: 120 },
-  { name: 'Tue', spent: 45 },
-  { name: 'Wed', spent: 80 },
-  { name: 'Thu', spent: 210 },
-  { name: 'Fri', spent: 90 },
-  { name: 'Sat', spent: 300 },
-  { name: 'Sun', spent: 150 },
-];
-
-const transactions = [
-  { id: 1, date: '2026-05-12', description: 'Whole Foods Market', category: 'Food', amount: -124.50, status: 'Completed' },
-  { id: 2, date: '2026-05-11', description: 'Uber Rides', category: 'Transport', amount: -24.90, status: 'Completed' },
-  { id: 3, date: '2026-05-10', description: 'Netflix Subscription', category: 'Entertainment', amount: -15.99, status: 'Completed' },
-  { id: 4, date: '2026-05-09', description: 'Salary Deposit', category: 'Income', amount: 4500.00, status: 'Completed' },
-  { id: 5, date: '2026-05-08', description: 'Electric Bill', category: 'Utilities', amount: -85.20, status: 'Completed' },
-];
 
 const formatCurrency = (amount, currencyCode, showPlus = false) => {
   const isNegative = amount < 0;
@@ -78,11 +55,39 @@ const formatCurrency = (amount, currencyCode, showPlus = false) => {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [txList, setTxList] = useState(transactions);
+  const [txList, setTxList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [currency, setCurrency] = useState('AED');
   const [uploadProgress, setUploadProgress] = useState('');
+  const [user, setUser] = useState(null);
   const fileInputRef = useRef(null);
+
+  const supabase = createClient();
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchUserAndData = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        router.push("/login");
+        return;
+      }
+      setUser(user);
+
+      const { data: txData, error: txError } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (!txError && txData) {
+        setTxList(txData);
+      }
+      setIsLoading(false);
+    };
+
+    fetchUserAndData();
+  }, [router, supabase]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -101,16 +106,8 @@ export default function Home() {
       const data = await res.json();
       if (data.success) {
         setUploadProgress("Updating Dashboard...");
-        const newTxs = data.transactions.map((t, i) => ({
-          id: Date.now() + i,
-          date: t.date,
-          description: t.description,
-          category: t.category,
-          amount: t.amount,
-          status: 'Completed'
-        }));
-        setTxList([...newTxs, ...txList]);
-        alert(`Successfully imported ${newTxs.length} transactions!`);
+        // Prepend the new transactions returned from the DB to our local state
+        setTxList(prevList => [...data.transactions, ...prevList]);
       } else {
         alert("Error parsing document: " + data.error);
       }
@@ -119,10 +116,50 @@ export default function Home() {
     } finally {
       setIsUploading(false);
       setUploadProgress("");
-      // reset file input
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
+
+  // --- Dynamic Dashboard Calculations ---
+  const totalBalance = txList.reduce((acc, tx) => acc + Number(tx.amount), 0);
+  const totalSpending = Math.abs(txList.filter(tx => Number(tx.amount) < 0).reduce((acc, tx) => acc + Number(tx.amount), 0));
+  const totalIncome = txList.filter(tx => Number(tx.amount) > 0).reduce((acc, tx) => acc + Number(tx.amount), 0);
+
+  // Pie Chart Data (Group Expenses by Category)
+  const categoryTotals = {};
+  txList.filter(tx => Number(tx.amount) < 0).forEach(tx => {
+    categoryTotals[tx.category] = (categoryTotals[tx.category] || 0) + Math.abs(Number(tx.amount));
+  });
+  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
+  const dynamicExpensesData = Object.keys(categoryTotals).map((key, i) => ({
+    name: key,
+    value: categoryTotals[key],
+    color: colors[i % colors.length]
+  }));
+
+  // Bar Chart Data (Group Expenses by Date, last 7 unique days)
+  const last7DaysTotals = {};
+  txList.filter(tx => Number(tx.amount) < 0).forEach(tx => {
+    last7DaysTotals[tx.date] = (last7DaysTotals[tx.date] || 0) + Math.abs(Number(tx.amount));
+  });
+  const dynamicBarData = Object.keys(last7DaysTotals)
+    .sort((a, b) => new Date(a) - new Date(b))
+    .slice(-7)
+    .map(date => ({
+      name: date.slice(5), // MM-DD
+      spent: last7DaysTotals[date]
+    }));
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[100dvh] w-full items-center justify-center bg-[var(--color-background)]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-[var(--color-accent-primary)]/30 border-t-[var(--color-accent-primary)] rounded-full animate-spin"></div>
+          <p className="text-[var(--color-foreground)] opacity-70 font-medium">Loading Finacle...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[100dvh] overflow-hidden overscroll-none">
@@ -196,28 +233,28 @@ export default function Home() {
               {/* Top Metrics Row */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                 <MetricCard 
-                  title="Total Balance" 
-                  amount={formatCurrency(12450, currency)} 
-                  subtitle="↑ +2.4% vs last month" 
-                  subtitleColor="up" 
+                  title="Net Balance" 
+                  amount={formatCurrency(totalBalance, currency)} 
+                  subtitle="Overall position" 
+                  subtitleColor="neutral" 
                   variant="indigo" 
                   icon={<ArrowUpRight size={18} strokeWidth={2.5} />} 
                 />
                 <MetricCard 
-                  title="Monthly Spending" 
-                  amount={formatCurrency(2850, currency)} 
-                  subtitle="↓ -5.1% vs last month" 
+                  title="Total Spending" 
+                  amount={formatCurrency(totalSpending, currency)} 
+                  subtitle="All-time expenses" 
                   subtitleColor="down" 
                   variant="emerald" 
                   icon={<ArrowDownRight size={18} strokeWidth={2.5} />} 
                 />
                 <MetricCard 
-                  title="Savings Target" 
-                  amount={formatCurrency(1150, currency)} 
-                  subtitle="On Track" 
-                  subtitleColor="neutral" 
+                  title="Total Income" 
+                  amount={formatCurrency(totalIncome, currency)} 
+                  subtitle="All-time inflows" 
+                  subtitleColor="up" 
                   variant="violet" 
-                  icon={<LayoutDashboard size={18} strokeWidth={2.5} />} 
+                  icon={<ArrowUpRight size={18} strokeWidth={2.5} />} 
                 />
               </div>
 
@@ -271,7 +308,7 @@ export default function Home() {
                             </linearGradient>
                           </defs>
                           <Pie
-                            data={expensesData}
+                            data={dynamicExpensesData}
                             cx="50%"
                             cy="50%"
                             innerRadius={60}
@@ -281,11 +318,9 @@ export default function Home() {
                             stroke="rgba(255,255,255,0.1)"
                             strokeWidth={2}
                           >
-                            <Cell fill="url(#gradHousing)" />
-                            <Cell fill="url(#gradFood)" />
-                            <Cell fill="url(#gradTransport)" />
-                            <Cell fill="url(#gradEntertainment)" />
-                            <Cell fill="url(#gradUtilities)" />
+                            {dynamicExpensesData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
                           </Pie>
                           <Tooltip 
                             contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(99, 102, 241, 0.5)', borderRadius: '12px', backdropFilter: 'blur(10px)', color: '#fff' }}
@@ -295,7 +330,7 @@ export default function Home() {
                       </ResponsiveContainer>
                     </div>
                     <div className="flex flex-wrap gap-4 justify-center mt-4">
-                      {expensesData.map((item, idx) => (
+                      {dynamicExpensesData.map((item, idx) => (
                         <div key={item.name} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                           <span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${item.color}, transparent)` }}></span>
                           <span>{item.name}</span>
@@ -312,7 +347,7 @@ export default function Home() {
                     <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-slate-900 dark:text-white">Weekly Activity</h3>
                     <div className="h-48 md:h-64 relative">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={barData}>
+                        <BarChart data={dynamicBarData}>
                           <defs>
                             <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor="#818cf8" />

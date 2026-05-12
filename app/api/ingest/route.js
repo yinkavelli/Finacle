@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import Papa from "papaparse";
+import { createClient } from "@/utils/supabase/server";
 
 // Polyfill DOMMatrix for pdf-parse in Next.js Server environments
 if (typeof global.DOMMatrix === 'undefined') {
@@ -9,6 +10,13 @@ if (typeof global.DOMMatrix === 'undefined') {
 
 export async function POST(request) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 });
+    }
+
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY || "dummy_key",
     });
@@ -117,7 +125,28 @@ export async function POST(request) {
         }
       }
 
-      return NextResponse.json({ success: true, transactions });
+      // Prepare for database
+      const dbTransactions = transactions.map(t => ({
+        user_id: user.id,
+        date: t.date,
+        description: t.description,
+        category: t.category,
+        amount: t.amount,
+        original_details: t.original_details,
+        status: 'Completed'
+      }));
+
+      // Insert into Supabase
+      const { data: insertedData, error: dbError } = await supabase
+        .from('transactions')
+        .insert(dbTransactions)
+        .select();
+
+      if (dbError) {
+        throw new Error(`Database error: ${dbError.message}`);
+      }
+
+      return NextResponse.json({ success: true, transactions: insertedData || transactions });
     }
     return NextResponse.json(
       { error: "Unsupported file type. Please upload a CSV." },
