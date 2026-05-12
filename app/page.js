@@ -125,7 +125,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden overscroll-none">
+    <div className="flex h-[100dvh] overflow-hidden overscroll-none">
       {/* Sidebar */}
       <aside className="w-64 border-r border-[var(--color-card-border)] bg-[var(--color-background)] flex flex-col hidden md:flex z-10 relative">
         <div className="p-6">
