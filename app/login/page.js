@@ -74,9 +74,7 @@ export default function LoginPage() {
         <div>
           <div className="flex items-center justify-between mb-12">
             <div className="flex items-center gap-2 font-bold text-2xl tracking-tight text-[var(--color-foreground)]">
-              <div className="w-8 h-8 rounded-lg bg-[var(--color-accent-primary)] flex items-center justify-center text-white">
-                F
-              </div>
+              <img src="/FinacleLogo.png" alt="Finacle Logo" className="w-8 h-8 rounded-lg object-cover" />
               Finacle
             </div>
             <div className="md:hidden">

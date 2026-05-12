@@ -167,9 +167,7 @@ export default function Home() {
       <aside className="w-64 border-r border-[var(--color-card-border)] bg-[var(--color-background)] flex flex-col hidden md:flex z-10 relative">
         <div className="p-6">
           <div className="flex items-center gap-2 font-bold text-2xl tracking-tight text-[var(--color-foreground)]">
-            <div className="w-8 h-8 rounded-lg bg-[var(--color-accent-primary)] flex items-center justify-center text-white">
-              F
-            </div>
+            <img src="/FinacleLogo.png" alt="Finacle Logo" className="w-8 h-8 rounded-lg object-cover" />
             Finacle
           </div>
         </div>
@@ -356,7 +354,7 @@ export default function Home() {
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                           <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} axisLine={false} tickLine={false} />
-                          <YAxis stroke="#94a3b8" fontSize={12} axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} />
+                          <YAxis stroke="#94a3b8" fontSize={12} axisLine={false} tickLine={false} tickFormatter={(val) => currency === 'AED' ? val + ' AED' : '$' + val} />
                           <Tooltip 
                             cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
                             contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(99, 102, 241, 0.5)', borderRadius: '12px', color: '#fff' }}
