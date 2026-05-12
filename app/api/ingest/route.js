@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import pdfParse from "pdf-parse";
-
-// We require OPENAI_API_KEY in the environment
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 export async function POST(request) {
   try {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || "dummy_key",
+    });
     const formData = await request.formData();
     const file = formData.get("file");
 
@@ -21,6 +18,7 @@ export async function POST(request) {
 
     // Parse the file based on its type
     if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+      const pdfParse = require("pdf-parse");
       const pdfData = await pdfParse(buffer);
       rawText = pdfData.text;
     } else if (file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv")) {
