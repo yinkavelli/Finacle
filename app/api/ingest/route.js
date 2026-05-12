@@ -122,7 +122,8 @@ export async function POST(request) {
 
     // --- PDF PARSING (Using LLM for unstructured data) ---
     if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
-      const pdfParse = require("pdf-parse");
+      // Import directly from lib to bypass index.js which tries to load a test file in Next.js/Turbopack
+      const pdfParse = require("pdf-parse/lib/pdf-parse.js");
       const pdfData = await pdfParse(buffer);
       
       // Limit text to ~10,000 characters to prevent 16k output token limits (Unterminated JSON error)
