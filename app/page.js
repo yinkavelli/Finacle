@@ -127,11 +127,15 @@ export default function Home() {
           <h1 className="text-lg md:text-xl font-semibold dark:text-white text-slate-900">Overview</h1>
           <div className="flex items-center gap-3 md:gap-4">
             <ThemeToggle />
-            <button className="relative overflow-hidden flex items-center gap-1 md:gap-2 border dark:border-indigo-500/50 border-indigo-200 bg-gradient-to-br dark:from-indigo-600 dark:to-indigo-900 from-indigo-500 to-indigo-700 text-white px-3 py-1.5 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-medium shadow-[0_4px_24px_rgba(99,102,241,0.3)] dark:shadow-[0_4px_24px_rgba(99,102,241,0.5)] hover:scale-[1.02] active:scale-95 transition-all group">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="relative overflow-hidden flex items-center gap-1 md:gap-2 border dark:border-indigo-500/50 border-indigo-200 bg-gradient-to-br dark:from-indigo-600 dark:to-indigo-900 from-indigo-500 to-indigo-700 text-white px-3 py-1.5 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-medium shadow-[0_4px_24px_rgba(99,102,241,0.3)] dark:shadow-[0_4px_24px_rgba(99,102,241,0.5)] hover:scale-[1.02] active:scale-95 transition-all group"
+            >
               <div className="shimmer-overlay shimmer-overlay-indigo"></div>
-              <Plus size={16} className="relative z-10 md:w-[18px] md:h-[18px]" />
-              <span className="relative z-10 hidden sm:inline">Add Expense</span>
-              <span className="relative z-10 inline sm:hidden">Add</span>
+              <Plus size={16} className={`relative z-10 md:w-[18px] md:h-[18px] ${isUploading ? 'animate-spin' : ''}`} />
+              <span className="relative z-10 hidden sm:inline">{isUploading ? 'Ingesting...' : 'Upload Statement'}</span>
+              <span className="relative z-10 inline sm:hidden">{isUploading ? '...' : 'Upload'}</span>
             </button>
             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-300 border-2 dark:border-indigo-500 border-indigo-300 overflow-hidden shadow-lg">
               <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" />
