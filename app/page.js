@@ -131,16 +131,16 @@ export default function Home() {
           </div>
 
           {/* AI Insights Card */}
-          <div className="relative overflow-hidden rounded-2xl border border-emerald-500/50 bg-slate-950 bg-gradient-to-br from-emerald-900/40 to-emerald-950/20 p-4 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex gap-3 md:gap-4 items-start group">
+          <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-emerald-500/50 bg-white dark:bg-slate-950 dark:bg-gradient-to-br dark:from-emerald-900/40 dark:to-emerald-950/20 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex gap-3 md:gap-4 items-start group">
             <div className="shimmer-overlay shimmer-overlay-emerald"></div>
             <div className="absolute top-0 left-0 w-1 h-full bg-[var(--color-accent-positive)]"></div>
             <div className="relative z-10 flex gap-4 w-full">
-              <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
+              <div className="p-3 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
                 <Bot size={24} />
               </div>
               <div>
-                <h3 className="text-base md:text-lg font-semibold mb-1 text-white">AI Financial Insight</h3>
-                <p className="text-slate-300 leading-relaxed text-xs md:text-sm">
+                <h3 className="text-base md:text-lg font-semibold mb-1 text-slate-900 dark:text-white">AI Financial Insight</h3>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs md:text-sm">
                   You've spent 20% less on Food & Dining this week compared to last week. If you maintain this trend, you could save an additional $140 by the end of the month. Great job!
                 </p>
               </div>
@@ -150,10 +150,10 @@ export default function Home() {
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Pie Chart */}
-            <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-4 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-indigo-500/30 bg-white dark:bg-slate-950 dark:bg-gradient-to-br dark:from-slate-900/80 dark:to-slate-950/80 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
               <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
               <div className="relative z-10">
-                <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-white">Spending Breakdown</h3>
+                <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-slate-900 dark:text-white">Spending Breakdown</h3>
                 <div className="h-48 md:h-64 relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -205,7 +205,7 @@ export default function Home() {
                 </div>
                 <div className="flex flex-wrap gap-4 justify-center mt-4">
                   {expensesData.map((item, idx) => (
-                    <div key={item.name} className="flex items-center gap-2 text-sm text-slate-300">
+                    <div key={item.name} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                       <span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${item.color}, transparent)` }}></span>
                       <span>{item.name}</span>
                     </div>
@@ -215,10 +215,10 @@ export default function Home() {
             </div>
 
             {/* Bar Chart */}
-            <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-4 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-indigo-500/30 bg-white dark:bg-slate-950 dark:bg-gradient-to-br dark:from-slate-900/80 dark:to-slate-950/80 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
               <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
               <div className="relative z-10">
-                <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-white">Weekly Activity</h3>
+                <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-slate-900 dark:text-white">Weekly Activity</h3>
                 <div className="h-48 md:h-64 relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={barData}>
@@ -244,18 +244,38 @@ export default function Home() {
           </div>
 
           {/* Recent Transactions */}
-          <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-4 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+          <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-indigo-500/30 bg-white dark:bg-slate-950 dark:bg-gradient-to-br dark:from-slate-900/80 dark:to-slate-950/80 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
             <div className="shimmer-overlay shimmer-overlay-indigo opacity-30"></div>
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4 md:mb-6">
-                <h3 className="text-base md:text-lg font-semibold text-white">Recent Transactions</h3>
-                <button className="text-xs md:text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">View All</button>
+                <h3 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white">Recent Transactions</h3>
+                <button className="text-xs md:text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-medium transition-colors">View All</button>
               </div>
               
-              <div className="overflow-x-auto">
+              {/* Mobile View */}
+              <div className="md:hidden flex flex-col">
+                {transactions.map((tx) => (
+                  <div key={tx.id} className="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium text-slate-900 dark:text-white text-sm">{tx.description}</span>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                        <span>{tx.date}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                        <span>{tx.category}</span>
+                      </div>
+                    </div>
+                    <div className={`text-sm font-semibold ${tx.amount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+                      {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop View */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800 text-[10px] md:text-xs uppercase tracking-wider text-slate-400">
+                    <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] md:text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <th className="pb-2 md:pb-3 font-medium">Date</th>
                       <th className="pb-2 md:pb-3 font-medium">Description</th>
                       <th className="pb-2 md:pb-3 font-medium">Category</th>
@@ -263,18 +283,18 @@ export default function Home() {
                       <th className="pb-2 md:pb-3 font-medium text-right">Amount</th>
                     </tr>
                   </thead>
-                  <tbody className="text-slate-300">
+                  <tbody className="text-slate-600 dark:text-slate-300">
                     {transactions.map((tx) => (
-                      <tr key={tx.id} className="border-b border-slate-800/50 last:border-0 hover:bg-white/5 transition-colors group cursor-pointer">
+                      <tr key={tx.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group cursor-pointer">
                         <td className="py-2 md:py-4 text-xs md:text-sm opacity-80 whitespace-nowrap">{tx.date}</td>
-                        <td className="py-2 md:py-4 text-sm md:text-base font-medium text-white group-hover:text-indigo-400 transition-colors">{tx.description}</td>
+                        <td className="py-2 md:py-4 text-sm md:text-base font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{tx.description}</td>
                         <td className="py-2 md:py-4">
-                          <span className="px-2 py-0.5 md:px-2.5 md:py-1 rounded-md text-[10px] md:text-xs font-medium bg-slate-800 text-slate-300">
+                          <span className="px-2 py-0.5 md:px-2.5 md:py-1 rounded-md text-[10px] md:text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                             {tx.category}
                           </span>
                         </td>
                         <td className="py-2 md:py-4 text-xs md:text-sm opacity-80 hidden sm:table-cell">{tx.status}</td>
-                        <td className={`py-2 md:py-4 text-right text-sm md:text-base font-semibold whitespace-nowrap ${tx.amount > 0 ? 'text-emerald-400' : ''}`}>
+                        <td className={`py-2 md:py-4 text-right text-sm md:text-base font-semibold whitespace-nowrap ${tx.amount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
                           {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                         </td>
                       </tr>
@@ -311,44 +331,47 @@ function NavItem({ icon, label, active, onClick }) {
 function MetricCard({ title, amount, subtitle, icon, variant = 'indigo', subtitleColor = 'neutral' }) {
   const colorMap = {
     indigo: {
-      cardGrad: 'bg-slate-950 from-indigo-900/40 to-indigo-950/20',
-      border: 'border-indigo-500/50',
-      iconBg: 'bg-indigo-500/20',
-      iconText: 'text-indigo-400',
-      shimmer: 'shimmer-overlay-indigo'
+      cardGrad: 'bg-white dark:bg-slate-950 dark:from-indigo-900/40 dark:to-indigo-950/20 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)] border-slate-200 dark:border-indigo-500/50',
+      iconBg: 'bg-indigo-100 dark:bg-indigo-500/20',
+      iconText: 'text-indigo-600 dark:text-indigo-400',
+      shimmer: 'shimmer-overlay-indigo',
+      titleText: 'text-slate-500 dark:text-slate-400',
+      amountText: 'text-slate-900 dark:text-white',
     },
     emerald: {
-      cardGrad: 'bg-slate-950 from-emerald-900/40 to-emerald-950/20',
-      border: 'border-emerald-500/50',
-      iconBg: 'bg-emerald-500/20',
-      iconText: 'text-emerald-400',
-      shimmer: 'shimmer-overlay-emerald'
+      cardGrad: 'bg-white dark:bg-slate-950 dark:from-emerald-900/40 dark:to-emerald-950/20 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)] border-slate-200 dark:border-emerald-500/50',
+      iconBg: 'bg-emerald-100 dark:bg-emerald-500/20',
+      iconText: 'text-emerald-600 dark:text-emerald-400',
+      shimmer: 'shimmer-overlay-emerald',
+      titleText: 'text-slate-500 dark:text-slate-400',
+      amountText: 'text-slate-900 dark:text-white',
     },
     violet: {
-      cardGrad: 'bg-slate-950 from-violet-900/40 to-violet-950/20',
-      border: 'border-violet-500/50',
-      iconBg: 'bg-violet-500/20',
-      iconText: 'text-violet-400',
-      shimmer: 'shimmer-overlay-violet'
+      cardGrad: 'bg-white dark:bg-slate-950 dark:from-violet-900/40 dark:to-violet-950/20 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)] border-slate-200 dark:border-violet-500/50',
+      iconBg: 'bg-violet-100 dark:bg-violet-500/20',
+      iconText: 'text-violet-600 dark:text-violet-400',
+      shimmer: 'shimmer-overlay-violet',
+      titleText: 'text-slate-500 dark:text-slate-400',
+      amountText: 'text-slate-900 dark:text-white',
     }
   };
 
   const stMap = {
-    up: 'text-emerald-400',
-    down: 'text-red-400',
-    neutral: 'text-slate-400'
+    up: 'text-emerald-600 dark:text-emerald-400',
+    down: 'text-red-600 dark:text-red-400',
+    neutral: 'text-slate-500 dark:text-slate-400'
   };
 
   const colors = colorMap[variant] || colorMap.indigo;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border ${colors.border} bg-gradient-to-br ${colors.cardGrad} p-3 md:p-4 shadow-[0_4px_24px_rgba(0,0,0,0.4)] transition-all duration-200 hover:scale-[0.98] active:scale-95 cursor-pointer group`}>
+    <div className={`relative overflow-hidden rounded-2xl border ${colors.cardGrad} p-3 md:p-4 transition-all duration-200 hover:scale-[0.98] active:scale-95 cursor-pointer group`}>
       <div className={`shimmer-overlay ${colors.shimmer}`}></div>
       
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-2 md:mb-3">
           <div className="flex items-baseline gap-2">
-            <span className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-slate-400">{title}</span>
+            <span className={`text-[10px] md:text-xs font-medium uppercase tracking-wider ${colors.titleText}`}>{title}</span>
             <span className="text-[9px] font-medium text-indigo-400/70 opacity-0 group-hover:opacity-100 transition-opacity">tap</span>
           </div>
           <div className={`flex h-6 w-6 md:h-8 md:w-8 items-center justify-center rounded-lg md:rounded-xl ${colors.iconBg} ${colors.iconText}`}>
@@ -356,7 +379,7 @@ function MetricCard({ title, amount, subtitle, icon, variant = 'indigo', subtitl
           </div>
         </div>
         
-        <div className="mb-1 font-sans text-2xl md:text-3xl font-bold tracking-tight text-white">
+        <div className={`mb-1 font-sans text-2xl md:text-3xl font-bold tracking-tight ${colors.amountText}`}>
           {amount}
         </div>
         
