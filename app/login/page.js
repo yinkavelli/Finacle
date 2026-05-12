@@ -34,6 +34,7 @@ export default function LoginPage() {
         });
         if (error) throw error;
         setMessage("Check your email for the confirmation link.");
+        setIsSignUp(false); // Switch to login mode
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -73,8 +74,8 @@ export default function LoginPage() {
 
         <div>
           <div className="flex items-center justify-between mb-12">
-            <div className="flex items-center gap-2 font-bold text-2xl tracking-tight text-[var(--color-foreground)]">
-              <img src="/FinacleLogo.png" alt="Finacle Logo" className="w-8 h-8 rounded-lg object-cover" />
+            <div className="flex items-center gap-2 font-bold text-4xl tracking-tight text-[var(--color-foreground)]">
+              <img src="/FinacleLogo.png" alt="Finacle Logo" className="w-14 h-14 rounded-lg object-cover" />
               Finacle
             </div>
             <div className="md:hidden">
