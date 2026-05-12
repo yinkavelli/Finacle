@@ -23,7 +23,7 @@ import {
   YAxis,
   CartesianGrid
 } from "recharts";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 // Realistic Dummy Data
 const expensesData = [
@@ -54,6 +54,46 @@ const transactions = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [txList, setTxList] = useState(transactions);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/ingest", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success) {
+        const newTxs = data.transactions.map((t, i) => ({
+          id: Date.now() + i,
+          date: t.date,
+          description: t.description,
+          category: t.category,
+          amount: t.amount,
+          status: 'Completed'
+        }));
+        setTxList([...newTxs, ...txList]);
+        alert(`Successfully imported ${newTxs.length} transactions!`);
+      } else {
+        alert("Error parsing document: " + data.error);
+      }
+    } catch (error) {
+      alert("Error uploading document");
+    } finally {
+      setIsUploading(false);
+      // reset file input
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   return (
     <div className="flex h-screen overflow-hidden overscroll-none">
@@ -249,12 +289,22 @@ export default function Home() {
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4 md:mb-6">
                 <h3 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white">Recent Transactions</h3>
-                <button className="text-xs md:text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-medium transition-colors">View All</button>
+                <div className="flex items-center gap-3">
+                  <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileUpload} accept=".csv,.pdf" />
+                  <button 
+                    onClick={() => fileInputRef.current?.click()} 
+                    disabled={isUploading}
+                    className="text-xs md:text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-medium transition-colors"
+                  >
+                    {isUploading ? 'Ingesting...' : 'Upload Statement'}
+                  </button>
+                  <button className="text-xs md:text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-medium transition-colors">View All</button>
+                </div>
               </div>
               
               {/* Mobile View */}
               <div className="md:hidden flex flex-col">
-                {transactions.map((tx) => (
+                {txList.map((tx) => (
                   <div key={tx.id} className="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer">
                     <div className="flex flex-col gap-1">
                       <span className="font-medium text-slate-900 dark:text-white text-sm">{tx.description}</span>
@@ -284,7 +334,7 @@ export default function Home() {
                     </tr>
                   </thead>
                   <tbody className="text-slate-600 dark:text-slate-300">
-                    {transactions.map((tx) => (
+                    {txList.map((tx) => (
                       <tr key={tx.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group cursor-pointer">
                         <td className="py-2 md:py-4 text-xs md:text-sm opacity-80 whitespace-nowrap">{tx.date}</td>
                         <td className="py-2 md:py-4 text-sm md:text-base font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{tx.description}</td>
