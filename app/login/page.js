@@ -64,25 +64,47 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#fdfdfd] dark:bg-[#060812] relative overflow-hidden px-6">
-      {/* Background decorative elements matching mockup */}
-      <div className="absolute top-0 right-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        {/* Subtle top-right glow to simulate the sweeping curve in the dark mode mockup */}
-        <div className="absolute top-[-20%] right-[-10%] w-[70%] h-[70%] bg-indigo-500/10 dark:bg-indigo-600/10 blur-[120px] rounded-full"></div>
-        <div className="absolute bottom-[-10%] left-[-20%] w-[60%] h-[60%] bg-emerald-500/5 dark:bg-emerald-500/10 blur-[120px] rounded-full"></div>
-      </div>
-
-      <div className="absolute top-6 right-6">
-        <ThemeToggle />
-      </div>
-
-      <div className="w-full max-w-[340px] flex flex-col items-center z-10">
-        {/* Logo Section */}
-        <div className="flex flex-col items-center mb-12">
-          <img src="/logo-light.png" alt="Finacle Logo" className="w-48 h-auto object-contain dark:hidden" />
-          <img src="/logo-dark.png" alt="Finacle Logo" className="w-48 h-auto object-contain hidden dark:block" />
-          <p className="text-[#64748b] dark:text-[#94a3b8] text-sm tracking-wide mt-2">Plan. Track. Spend Smarter.</p>
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes shimmerBg {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .shimmer-bg {
+          background-size: 200% 200%;
+          animation: shimmerBg 15s ease infinite;
+        }
+        .noise-texture {
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+          opacity: 0.4;
+          mix-blend-mode: overlay;
+          pointer-events: none;
+        }
+        .dark .noise-texture {
+          opacity: 0.15;
+          mix-blend-mode: color-dodge;
+        }
+      `}} />
+      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6 bg-gradient-to-br from-[#f8fafc] via-[#e2e8f0] to-[#f8fafc] dark:from-[#060812] dark:via-[#111827] dark:to-[#060812] shimmer-bg">
+        <div className="absolute inset-0 noise-texture z-0"></div>
+        {/* Background decorative elements matching mockup */}
+        <div className="absolute top-0 right-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+          {/* Subtle top-right glow to simulate the sweeping curve in the dark mode mockup */}
+          <div className="absolute top-[-20%] right-[-10%] w-[70%] h-[70%] bg-indigo-500/10 dark:bg-indigo-600/10 blur-[120px] rounded-full"></div>
+          <div className="absolute bottom-[-10%] left-[-20%] w-[60%] h-[60%] bg-emerald-500/5 dark:bg-emerald-500/10 blur-[120px] rounded-full"></div>
         </div>
+
+        <div className="absolute top-6 right-6 z-20">
+          <ThemeToggle />
+        </div>
+
+        <div className="w-full max-w-[340px] flex flex-col items-center z-10">
+          {/* Logo Section */}
+          <div className="flex flex-col items-center mb-12">
+            <img src="/logo-light.png" alt="Finacle Logo" className="w-72 md:w-80 h-auto object-contain dark:hidden" />
+            <img src="/logo-dark.png" alt="Finacle Logo" className="w-72 md:w-80 h-auto object-contain hidden dark:block" />
+          </div>
 
         {/* Dynamic Form Area */}
         {!showEmailForm ? (
@@ -194,6 +216,7 @@ export default function LoginPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
