@@ -56,7 +56,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden overscroll-none">
       {/* Sidebar */}
       <aside className="w-64 border-r border-[var(--color-card-border)] bg-[var(--color-background)] flex flex-col hidden md:flex z-10 relative">
         <div className="p-6">
@@ -81,28 +81,29 @@ export default function Home() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col relative overflow-y-auto">
+      <main className="flex-1 flex flex-col relative overflow-y-auto overscroll-y-none">
         {/* Header */}
-        <header className="pt-6 pb-4 min-h-[5.5rem] border-b border-[var(--color-card-border)] flex items-center justify-between px-8 sticky top-0 z-20 backdrop-blur-xl bg-[var(--color-background)]/80">
-          <h1 className="text-xl font-semibold dark:text-white text-slate-900">Overview</h1>
-          <div className="flex items-center gap-4">
+        <header className="pt-4 pb-3 md:pt-6 md:pb-4 min-h-[4.5rem] md:min-h-[5.5rem] border-b border-[var(--color-card-border)] flex items-center justify-between px-4 md:px-8 sticky top-0 z-20 backdrop-blur-xl bg-[var(--color-background)]/80">
+          <h1 className="text-lg md:text-xl font-semibold dark:text-white text-slate-900">Overview</h1>
+          <div className="flex items-center gap-3 md:gap-4">
             <ThemeToggle />
-            <button className="relative overflow-hidden flex items-center gap-2 border dark:border-indigo-500/50 border-indigo-200 bg-gradient-to-br dark:from-indigo-600 dark:to-indigo-900 from-indigo-500 to-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-[0_4px_24px_rgba(99,102,241,0.3)] dark:shadow-[0_4px_24px_rgba(99,102,241,0.5)] hover:scale-[1.02] active:scale-95 transition-all group">
+            <button className="relative overflow-hidden flex items-center gap-1 md:gap-2 border dark:border-indigo-500/50 border-indigo-200 bg-gradient-to-br dark:from-indigo-600 dark:to-indigo-900 from-indigo-500 to-indigo-700 text-white px-3 py-1.5 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-medium shadow-[0_4px_24px_rgba(99,102,241,0.3)] dark:shadow-[0_4px_24px_rgba(99,102,241,0.5)] hover:scale-[1.02] active:scale-95 transition-all group">
               <div className="shimmer-overlay shimmer-overlay-indigo"></div>
-              <Plus size={18} className="relative z-10" />
-              <span className="relative z-10">Add Expense</span>
+              <Plus size={16} className="relative z-10 md:w-[18px] md:h-[18px]" />
+              <span className="relative z-10 hidden sm:inline">Add Expense</span>
+              <span className="relative z-10 inline sm:hidden">Add</span>
             </button>
-            <div className="w-10 h-10 rounded-full bg-slate-300 border-2 dark:border-indigo-500 border-indigo-300 overflow-hidden shadow-lg">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-300 border-2 dark:border-indigo-500 border-indigo-300 overflow-hidden shadow-lg">
               <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" />
             </div>
           </div>
         </header>
 
         {/* Dashboard Content */}
-        <div className="p-8 max-w-7xl mx-auto w-full space-y-8">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-4 md:space-y-8">
           
           {/* Top Metrics Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             <MetricCard 
               title="Total Balance" 
               amount="$12,450.00" 
@@ -130,7 +131,7 @@ export default function Home() {
           </div>
 
           {/* AI Insights Card */}
-          <div className="relative overflow-hidden rounded-2xl border border-emerald-500/50 bg-slate-950 bg-gradient-to-br from-emerald-900/40 to-emerald-950/20 p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex gap-4 items-start group">
+          <div className="relative overflow-hidden rounded-2xl border border-emerald-500/50 bg-slate-950 bg-gradient-to-br from-emerald-900/40 to-emerald-950/20 p-4 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex gap-3 md:gap-4 items-start group">
             <div className="shimmer-overlay shimmer-overlay-emerald"></div>
             <div className="absolute top-0 left-0 w-1 h-full bg-[var(--color-accent-positive)]"></div>
             <div className="relative z-10 flex gap-4 w-full">
@@ -138,8 +139,8 @@ export default function Home() {
                 <Bot size={24} />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-1 text-white">AI Financial Insight</h3>
-                <p className="text-slate-300 leading-relaxed text-sm">
+                <h3 className="text-base md:text-lg font-semibold mb-1 text-white">AI Financial Insight</h3>
+                <p className="text-slate-300 leading-relaxed text-xs md:text-sm">
                   You've spent 20% less on Food & Dining this week compared to last week. If you maintain this trend, you could save an additional $140 by the end of the month. Great job!
                 </p>
               </div>
@@ -147,13 +148,13 @@ export default function Home() {
           </div>
 
           {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Pie Chart */}
-            <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+            <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-4 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
               <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
               <div className="relative z-10">
-                <h3 className="text-lg font-semibold mb-6 text-white">Spending Breakdown</h3>
-                <div className="h-64 relative">
+                <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-white">Spending Breakdown</h3>
+                <div className="h-48 md:h-64 relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <defs>
@@ -214,11 +215,11 @@ export default function Home() {
             </div>
 
             {/* Bar Chart */}
-            <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+            <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-4 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
               <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
               <div className="relative z-10">
-                <h3 className="text-lg font-semibold mb-6 text-white">Weekly Activity</h3>
-                <div className="h-64 relative">
+                <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-white">Weekly Activity</h3>
+                <div className="h-48 md:h-64 relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={barData}>
                       <defs>
@@ -243,37 +244,37 @@ export default function Home() {
           </div>
 
           {/* Recent Transactions */}
-          <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+          <div className="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-slate-950 bg-gradient-to-br from-slate-900/80 to-slate-950/80 p-4 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
             <div className="shimmer-overlay shimmer-overlay-indigo opacity-30"></div>
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-white">Recent Transactions</h3>
-                <button className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">View All</button>
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <h3 className="text-base md:text-lg font-semibold text-white">Recent Transactions</h3>
+                <button className="text-xs md:text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">View All</button>
               </div>
               
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
-                      <th className="pb-3 font-medium">Date</th>
-                      <th className="pb-3 font-medium">Description</th>
-                      <th className="pb-3 font-medium">Category</th>
-                      <th className="pb-3 font-medium">Status</th>
-                      <th className="pb-3 font-medium text-right">Amount</th>
+                    <tr className="border-b border-slate-800 text-[10px] md:text-xs uppercase tracking-wider text-slate-400">
+                      <th className="pb-2 md:pb-3 font-medium">Date</th>
+                      <th className="pb-2 md:pb-3 font-medium">Description</th>
+                      <th className="pb-2 md:pb-3 font-medium">Category</th>
+                      <th className="pb-2 md:pb-3 font-medium hidden sm:table-cell">Status</th>
+                      <th className="pb-2 md:pb-3 font-medium text-right">Amount</th>
                     </tr>
                   </thead>
                   <tbody className="text-slate-300">
                     {transactions.map((tx) => (
                       <tr key={tx.id} className="border-b border-slate-800/50 last:border-0 hover:bg-white/5 transition-colors group cursor-pointer">
-                        <td className="py-4 text-sm opacity-80">{tx.date}</td>
-                        <td className="py-4 font-medium text-white group-hover:text-indigo-400 transition-colors">{tx.description}</td>
-                        <td className="py-4">
-                          <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">
+                        <td className="py-2 md:py-4 text-xs md:text-sm opacity-80 whitespace-nowrap">{tx.date}</td>
+                        <td className="py-2 md:py-4 text-sm md:text-base font-medium text-white group-hover:text-indigo-400 transition-colors">{tx.description}</td>
+                        <td className="py-2 md:py-4">
+                          <span className="px-2 py-0.5 md:px-2.5 md:py-1 rounded-md text-[10px] md:text-xs font-medium bg-slate-800 text-slate-300">
                             {tx.category}
                           </span>
                         </td>
-                        <td className="py-4 text-sm opacity-80">{tx.status}</td>
-                        <td className={`py-4 text-right font-semibold ${tx.amount > 0 ? 'text-emerald-400' : ''}`}>
+                        <td className="py-2 md:py-4 text-xs md:text-sm opacity-80 hidden sm:table-cell">{tx.status}</td>
+                        <td className={`py-2 md:py-4 text-right text-sm md:text-base font-semibold whitespace-nowrap ${tx.amount > 0 ? 'text-emerald-400' : ''}`}>
                           {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                         </td>
                       </tr>
@@ -341,25 +342,25 @@ function MetricCard({ title, amount, subtitle, icon, variant = 'indigo', subtitl
   const colors = colorMap[variant] || colorMap.indigo;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border ${colors.border} bg-gradient-to-br ${colors.cardGrad} p-4 shadow-[0_4px_24px_rgba(0,0,0,0.4)] transition-all duration-200 hover:scale-[0.98] active:scale-95 cursor-pointer group`}>
+    <div className={`relative overflow-hidden rounded-2xl border ${colors.border} bg-gradient-to-br ${colors.cardGrad} p-3 md:p-4 shadow-[0_4px_24px_rgba(0,0,0,0.4)] transition-all duration-200 hover:scale-[0.98] active:scale-95 cursor-pointer group`}>
       <div className={`shimmer-overlay ${colors.shimmer}`}></div>
       
       <div className="relative z-10">
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start justify-between mb-2 md:mb-3">
           <div className="flex items-baseline gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">{title}</span>
+            <span className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-slate-400">{title}</span>
             <span className="text-[9px] font-medium text-indigo-400/70 opacity-0 group-hover:opacity-100 transition-opacity">tap</span>
           </div>
-          <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${colors.iconBg} ${colors.iconText}`}>
+          <div className={`flex h-6 w-6 md:h-8 md:w-8 items-center justify-center rounded-lg md:rounded-xl ${colors.iconBg} ${colors.iconText}`}>
             {icon}
           </div>
         </div>
         
-        <div className="mb-1 font-sans text-3xl font-bold tracking-tight text-white">
+        <div className="mb-1 font-sans text-2xl md:text-3xl font-bold tracking-tight text-white">
           {amount}
         </div>
         
-        <div className={`text-xs font-medium ${stMap[subtitleColor]}`}>
+        <div className={`text-[10px] md:text-xs font-medium ${stMap[subtitleColor]}`}>
           {subtitle}
         </div>
       </div>
