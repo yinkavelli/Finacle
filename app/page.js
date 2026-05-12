@@ -167,7 +167,8 @@ export default function Home() {
       <aside className="w-64 border-r border-[var(--color-card-border)] bg-[var(--color-background)] flex flex-col hidden md:flex z-10 relative">
         <div className="p-6">
           <div className="flex items-center">
-            <img src="/FinacleLogo.png" alt="Finacle Logo" className="w-32 h-auto object-contain" />
+            <img src="/logo-light.png" alt="Finacle Logo" className="w-32 h-auto object-contain dark:hidden" />
+            <img src="/logo-dark.png" alt="Finacle Logo" className="w-32 h-auto object-contain hidden dark:block" />
           </div>
         </div>
         
