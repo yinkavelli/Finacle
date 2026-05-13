@@ -1,7 +1,7 @@
 "use client";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { ArrowRight, Loader2, Mail, ArrowLeft } from "lucide-react";
+import { ArrowRight, Loader2, Mail, ArrowLeft, Power } from "lucide-react";
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
@@ -86,7 +86,7 @@ export default function LoginPage() {
 
         {/* Dynamic Form Area */}
         {!showEmailForm ? (
-          <div className="w-full space-y-4 animate-in fade-in duration-500">
+          <div className="w-full space-y-4 animate-fade-in">
             <button 
               onClick={handleGoogleLogin}
               className="w-full flex items-center justify-center gap-3 bg-transparent border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-900 dark:text-white py-4 rounded-[28px] font-semibold transition-colors shadow-sm"
@@ -129,7 +129,7 @@ export default function LoginPage() {
             </div>
           </div>
         ) : (
-          <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="w-full animate-fade-in">
              <button 
                onClick={() => setShowEmailForm(false)}
                className="mb-6 flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
@@ -155,24 +155,26 @@ export default function LoginPage() {
                )}
 
                <div>
-                 <input 
-                   id="email" 
-                   type="email" 
+                 <label htmlFor="email" className="sr-only">Email Address</label>
+                 <input
+                   id="email"
+                   type="email"
                    value={email}
                    onChange={(e) => setEmail(e.target.value)}
-                   placeholder="Email Address" 
+                   placeholder="Email Address"
                    className="w-full bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 rounded-[20px] px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm"
                    required
                  />
                </div>
-               
+
                <div>
-                 <input 
-                   id="password" 
+                 <label htmlFor="password" className="sr-only">Password</label>
+                 <input
+                   id="password"
                    type="password"
                    value={password}
                    onChange={(e) => setPassword(e.target.value)}
-                   placeholder="Password" 
+                   placeholder="Password"
                    className="w-full bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 rounded-[20px] px-5 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm"
                    required
                    minLength={6}
@@ -186,7 +188,7 @@ export default function LoginPage() {
                >
                  {loading ? <Loader2 size={18} className="animate-spin" /> : (
                    <>
-                     {isSignUp ? "Sign Up" : "Sign In"}
+                     {isSignUp ? "Sign Up" : <><Power size={18} /> Sign In</>}
                    </>
                  )}
                </button>
