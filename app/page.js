@@ -138,18 +138,43 @@ export default function Home() {
     color: colors[i % colors.length]
   }));
 
-  // Bar Chart Data (Group Expenses by Date, last 7 unique days)
-  const last7DaysTotals = {};
-  txList.filter(tx => Number(tx.amount) < 0).forEach(tx => {
-    last7DaysTotals[tx.date] = (last7DaysTotals[tx.date] || 0) + Math.abs(Number(tx.amount));
+  // Bar Chart Data (Weekly Activity fallback to latest)
+  let targetEndDate = new Date();
+  let isDataStale = false;
+  
+  if (txList.length > 0) {
+    const dates = txList.map(tx => new Date(tx.date).getTime());
+    const maxDate = new Date(Math.max(...dates));
+    
+    // If the latest transaction is older than 7 days from today, fallback to that week
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    if (maxDate < sevenDaysAgo) {
+      targetEndDate = maxDate;
+      isDataStale = true;
+    }
+  }
+
+  const weeklyDates = Array.from({length: 7}, (_, i) => {
+    const d = new Date(targetEndDate);
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().split('T')[0];
   });
-  const dynamicBarData = Object.keys(last7DaysTotals)
-    .sort((a, b) => new Date(a) - new Date(b))
-    .slice(-7)
-    .map(date => ({
-      name: date.slice(5), // MM-DD
-      spent: last7DaysTotals[date]
-    }));
+
+  const weeklyTotals = {};
+  weeklyDates.forEach(date => weeklyTotals[date] = 0);
+
+  txList.filter(tx => Number(tx.amount) < 0).forEach(tx => {
+    if (weeklyTotals[tx.date] !== undefined) {
+      weeklyTotals[tx.date] += Math.abs(Number(tx.amount));
+    }
+  });
+
+  const dynamicBarData = weeklyDates.map(date => ({
+    name: date.slice(5),
+    spent: weeklyTotals[date]
+  }));
 
   if (isLoading) {
     return (
@@ -163,7 +188,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden overscroll-none">
+    <div className="flex w-full max-w-[100vw] h-[100dvh] overflow-hidden overscroll-none">
       {/* Sidebar */}
       <aside className="w-64 border-r border-[var(--color-card-border)] bg-[var(--color-background)] flex flex-col hidden md:flex z-10 relative">
         <div className="p-6">
@@ -177,12 +202,8 @@ export default function Home() {
           <NavItem icon={<LayoutDashboard size={20}/>} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
           <NavItem icon={<WalletCards size={20}/>} label="Transactions" active={activeTab === 'transactions'} onClick={() => setActiveTab('transactions')} />
           <NavItem icon={<ChartIcon size={20}/>} label="Analytics" active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
-          <NavItem icon={<Bot size={20}/>} label="AI Advisor" active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
+          <NavItem icon={<Settings size={20}/>} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
-
-        <div className="p-4 border-t border-[var(--color-card-border)]">
-          <NavItem icon={<Settings size={20}/>} label="Settings" />
-        </div>
       </aside>
 
       {/* Main Content */}
@@ -193,16 +214,9 @@ export default function Home() {
             {activeTab === 'dashboard' && 'Overview'}
             {activeTab === 'transactions' && 'Transactions'}
             {activeTab === 'analytics' && 'Analytics'}
-            {activeTab === 'ai' && 'AI Advisor'}
+            {activeTab === 'settings' && 'Settings'}
           </h1>
           <div className="flex items-center gap-3 md:gap-4">
-            <button 
-              onClick={() => setCurrency(currency === 'USD' ? 'AED' : 'USD')}
-              className="px-2 py-1.5 md:px-3 md:py-2 rounded-xl text-xs md:text-sm font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-            >
-              {currency}
-            </button>
-            <ThemeToggle />
             
             {/* Hidden File Input */}
             <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileUpload} accept=".csv" />
@@ -230,31 +244,46 @@ export default function Home() {
           {activeTab === 'dashboard' && (
             <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {/* Top Metrics Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
                 <MetricCard 
                   title="Net Balance" 
                   amount={formatCurrency(totalBalance, currency)} 
-                  subtitle="Overall position" 
+                  subtitle="Overall" 
                   subtitleColor="neutral" 
                   variant="indigo" 
-                  icon={<ArrowUpRight size={18} strokeWidth={2.5} />} 
+                  icon={<ArrowUpRight size={16} strokeWidth={2.5} />} 
                 />
                 <MetricCard 
-                  title="Total Spending" 
+                  title="Total Spent" 
                   amount={formatCurrency(totalSpending, currency)} 
-                  subtitle="All-time expenses" 
+                  subtitle="All-time" 
                   subtitleColor="down" 
                   variant="emerald" 
-                  icon={<ArrowDownRight size={18} strokeWidth={2.5} />} 
+                  icon={<ArrowDownRight size={16} strokeWidth={2.5} />} 
                 />
-                <MetricCard 
-                  title="Total Income" 
-                  amount={formatCurrency(totalIncome, currency)} 
-                  subtitle="All-time inflows" 
-                  subtitleColor="up" 
-                  variant="violet" 
-                  icon={<ArrowUpRight size={18} strokeWidth={2.5} />} 
-                />
+                <div className="col-span-2 md:col-span-1">
+                  <MetricCard 
+                    title="Total Income" 
+                    amount={formatCurrency(totalIncome, currency)} 
+                    subtitle="All-time" 
+                    subtitleColor="up" 
+                    variant="violet" 
+                    icon={<Plus size={16} strokeWidth={2.5} />} 
+                  />
+                </div>
+              </div>
+
+              {/* Income vs Spending Progress Bar */}
+              <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+                <h3 className="text-sm md:text-base font-semibold mb-3 text-slate-900 dark:text-white">Income vs Spending</h3>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 md:h-4 mb-2 overflow-hidden flex">
+                  <div className="bg-emerald-500 h-full" style={{ width: `${totalIncome === 0 ? 0 : Math.min(100, (totalIncome / (totalIncome + totalSpending)) * 100)}%` }}></div>
+                  <div className="bg-indigo-500 h-full" style={{ width: `${totalSpending === 0 ? 0 : Math.min(100, (totalSpending / (totalIncome + totalSpending)) * 100)}%` }}></div>
+                </div>
+                <div className="flex justify-between text-xs font-medium">
+                  <span className="text-emerald-600 dark:text-emerald-400">Income: {Math.round((totalIncome / (totalIncome + totalSpending || 1)) * 100)}%</span>
+                  <span className="text-indigo-600 dark:text-indigo-400">Spending: {Math.round((totalSpending / (totalIncome + totalSpending || 1)) * 100)}%</span>
+                </div>
               </div>
 
               {/* AI Insights Card */}
@@ -328,11 +357,11 @@ export default function Home() {
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
-                    <div className="flex flex-wrap gap-4 justify-center mt-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-2 gap-x-4 mt-4 px-2">
                       {dynamicExpensesData.map((item, idx) => (
-                        <div key={item.name} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                          <span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${item.color}, transparent)` }}></span>
-                          <span>{item.name}</span>
+                        <div key={item.name} className="flex items-center gap-2 text-xs md:text-sm text-slate-600 dark:text-slate-300 truncate">
+                          <span className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full shrink-0" style={{ background: `linear-gradient(135deg, ${item.color}, transparent)` }}></span>
+                          <span className="truncate" title={item.name}>{item.name}</span>
                         </div>
                       ))}
                     </div>
@@ -343,7 +372,14 @@ export default function Home() {
                 <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-indigo-500/30 bg-white dark:bg-slate-950 dark:bg-gradient-to-br dark:from-slate-900/80 dark:to-slate-950/80 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
                   <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
                   <div className="relative z-10">
-                    <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-slate-900 dark:text-white">Weekly Activity</h3>
+                    <div className="flex items-center justify-between mb-4 md:mb-6">
+                      <h3 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white">Weekly Activity</h3>
+                      {isDataStale && (
+                        <span className="text-[10px] md:text-xs text-amber-600 dark:text-amber-400 font-medium px-2 py-1 bg-amber-100 dark:bg-amber-500/10 rounded-full border border-amber-200 dark:border-amber-500/20">
+                          Older data (Please upload statement)
+                        </span>
+                      )}
+                    </div>
                     <div className="h-48 md:h-64 relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={dynamicBarData}>
@@ -355,14 +391,62 @@ export default function Home() {
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                           <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} axisLine={false} tickLine={false} />
-                          <YAxis stroke="#94a3b8" fontSize={12} axisLine={false} tickLine={false} tickFormatter={(val) => currency === 'AED' ? val + ' AED' : '$' + val} />
+                          <YAxis stroke="#94a3b8" fontSize={12} axisLine={false} tickLine={false} tickFormatter={(val) => currency === 'AED' ? 'Đ ' + val : '$' + val} />
                           <Tooltip 
                             cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
                             contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(99, 102, 241, 0.5)', borderRadius: '12px', color: '#fff' }}
+                            formatter={(value) => [currency === 'AED' ? 'Đ ' + value : '$' + value, "Spent"]}
                           />
                           <Bar dataKey="spent" fill="url(#barGradient)" radius={[6, 6, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: SETTINGS */}
+          {activeTab === 'settings' && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Preferences</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your dashboard settings and display options.</p>
+                </div>
+                
+                <div className="p-6 md:p-8 space-y-6">
+                  {/* Currency Toggle */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                      <h3 className="font-semibold text-slate-900 dark:text-white">Currency Display</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Choose the primary currency for all financial metrics.</p>
+                    </div>
+                    <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                      <button 
+                        onClick={() => setCurrency('AED')}
+                        className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${currency === 'AED' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                      >
+                        AED (Đ)
+                      </button>
+                      <button 
+                        onClick={() => setCurrency('USD')}
+                        className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${currency === 'USD' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                      >
+                        USD ($)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Theme Toggle */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
+                    <div>
+                      <h3 className="font-semibold text-slate-900 dark:text-white">Appearance</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Customize the visual theme of Finacle.</p>
+                    </div>
+                    <div className="scale-110 origin-left sm:origin-right flex items-center justify-center p-2 rounded-xl bg-slate-100 dark:bg-slate-800">
+                      <ThemeToggle />
                     </div>
                   </div>
                 </div>
@@ -472,11 +556,11 @@ export default function Home() {
               <span className="text-[10px] font-medium">Analytics</span>
             </button>
             <button 
-              onClick={() => setActiveTab('ai')}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${activeTab === 'ai' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+              onClick={() => setActiveTab('settings')}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${activeTab === 'settings' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
-              <Bot size={20} />
-              <span className="text-[10px] font-medium">Advisor</span>
+              <Settings size={20} />
+              <span className="text-[10px] font-medium">Settings</span>
             </button>
           </div>
         </nav>
@@ -540,11 +624,11 @@ function MetricCard({ title, amount, subtitle, icon, variant = 'indigo', subtitl
   const colors = colorMap[variant] || colorMap.indigo;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border ${colors.cardGrad} dark:bg-gradient-to-br p-3 md:p-4 transition-all duration-200 hover:scale-[0.98] active:scale-95 cursor-pointer group`}>
+    <div className={`relative overflow-hidden rounded-2xl border ${colors.cardGrad} dark:bg-gradient-to-br p-2.5 md:p-4 transition-all duration-200 hover:scale-[0.98] active:scale-95 cursor-pointer group`}>
       <div className={`shimmer-overlay ${colors.shimmer}`}></div>
       
       <div className="relative z-10">
-        <div className="flex items-start justify-between mb-2 md:mb-3">
+        <div className="flex items-start justify-between mb-1 md:mb-3">
           <div className="flex items-baseline gap-2">
             <span className={`text-[10px] md:text-xs font-medium uppercase tracking-wider ${colors.titleText}`}>{title}</span>
             <span className="text-[9px] font-medium text-indigo-400/70 opacity-0 group-hover:opacity-100 transition-opacity">tap</span>
@@ -554,7 +638,7 @@ function MetricCard({ title, amount, subtitle, icon, variant = 'indigo', subtitl
           </div>
         </div>
         
-        <div className={`mb-1 font-sans text-2xl md:text-3xl font-bold tracking-tight ${colors.amountText}`}>
+        <div className={`mb-1 font-sans text-xl md:text-3xl font-bold tracking-tight ${colors.amountText}`}>
           {amount}
         </div>
         
