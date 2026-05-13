@@ -152,8 +152,12 @@ export default function Home() {
       const res = await fetch("/api/ingest", { method: "POST", body: formData });
       const data = await res.json();
       if (data.success) {
-        setUploadProgress("Updating Dashboard...");
-        setTxList((prev) => [...data.transactions, ...prev]);
+        if (data.transactions.length > 0) {
+          setUploadProgress("Updating Dashboard...");
+          setTxList((prev) => [...data.transactions, ...prev]);
+        } else {
+          alert(data.message || "No new transactions found — this file may have already been uploaded.");
+        }
       } else {
         alert("Error parsing document: " + data.error);
       }
@@ -179,8 +183,12 @@ export default function Home() {
       const ingestRes = await fetch("/api/ingest", { method: "POST", body: formData });
       const data = await ingestRes.json();
       if (data.success) {
-        setUploadProgress("Updating Dashboard...");
-        setTxList((prev) => [...data.transactions, ...prev]);
+        if (data.transactions.length > 0) {
+          setUploadProgress("Updating Dashboard...");
+          setTxList((prev) => [...data.transactions, ...prev]);
+        } else {
+          alert("Demo data already loaded. Clear your data first, then try again.");
+        }
       } else {
         alert("Error loading demo: " + data.error);
       }

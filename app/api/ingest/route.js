@@ -16,10 +16,6 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized. Please log in." }, { status: 401 });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({ error: "Server misconfiguration: missing OpenAI API key." }, { status: 500 });
-    }
-
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const formData = await request.formData();
     const file = formData.get("file");
