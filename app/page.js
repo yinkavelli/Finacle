@@ -10,7 +10,8 @@ import {
   Settings, 
   Plus,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  X
 } from "lucide-react";
 import { 
   PieChart, 
