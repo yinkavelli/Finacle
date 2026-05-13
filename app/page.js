@@ -349,8 +349,18 @@ export default function Home() {
                             ))}
                           </Pie>
                           <Tooltip 
-                            contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(99, 102, 241, 0.5)', borderRadius: '12px', backdropFilter: 'blur(10px)', color: '#fff' }}
-                            itemStyle={{ color: '#fff' }}
+                            contentStyle={{ 
+                              backgroundColor: 'rgba(15, 23, 42, 0.4)', 
+                              backdropFilter: 'blur(12px)',
+                              WebkitBackdropFilter: 'blur(12px)',
+                              borderColor: 'rgba(255, 255, 255, 0.1)', 
+                              borderRadius: '12px', 
+                              color: '#fff',
+                              fontSize: '12px',
+                              padding: '8px 12px',
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+                            }}
+                            itemStyle={{ fontSize: '11px', fontWeight: '500', color: '#fff' }}
                             formatter={(value, name) => [
                               currency === 'AED' 
                                 ? 'Đ ' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -403,7 +413,19 @@ export default function Home() {
                           />
                           <Tooltip 
                             cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
-                            contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(99, 102, 241, 0.5)', borderRadius: '12px', color: '#fff' }}
+                            contentStyle={{ 
+                              backgroundColor: 'rgba(15, 23, 42, 0.4)', 
+                              backdropFilter: 'blur(12px)',
+                              WebkitBackdropFilter: 'blur(12px)',
+                              borderColor: 'rgba(255, 255, 255, 0.1)', 
+                              borderRadius: '12px', 
+                              color: '#fff',
+                              fontSize: '12px',
+                              padding: '8px 12px',
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+                            }}
+                            itemStyle={{ fontSize: '11px', fontWeight: '500' }}
+                            labelStyle={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}
                             formatter={(value, name) => [
                               currency === 'AED' 
                                 ? 'Đ ' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -704,8 +726,8 @@ function InsightModal({ insight, onClose, currency }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300 ease-out">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-90 slide-in-from-bottom-4 duration-300 ease-out">
         <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
           <div>
             <div className="flex items-center gap-2">
@@ -757,13 +779,13 @@ function InsightModal({ insight, onClose, currency }) {
           </div>
         )}
 
-        <div className="overflow-y-auto p-4 md:p-5 flex-1">
+        <div className="overflow-y-auto p-4 md:p-5 flex-1 relative">
           {txs.length === 0 ? (
-            <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+            <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm animate-in fade-in duration-300">
               No transactions found.
             </div>
           ) : (
-            <div className="space-y-3">
+            <div key={currentView.title + drillStack.length} className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {currentView.mode === 'category' || currentView.mode === 'month' ? (
                 groupedItems.map((item, idx) => {
                   const pct = totalAmount > 0 ? ((item.amount / totalAmount) * 100).toFixed(1) : 0;
@@ -885,12 +907,11 @@ function MetricCard({ title, amount, subtitle, icon, variant = 'indigo', subtitl
             {icon}
           </div>
         </div>
-        
-        <div className={`mb-1 font-sans text-xl md:text-3xl font-bold tracking-tight ${colors.amountText}`}>
+        <div className={`mb-1 font-sans text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-center truncate ${colors.amountText}`}>
           {amount}
         </div>
         
-        <div className={`text-[10px] md:text-xs font-medium ${stMap[subtitleColor]}`}>
+        <div className={`text-[10px] md:text-xs font-medium text-center ${stMap[subtitleColor]}`}>
           {subtitle}
         </div>
       </div>
