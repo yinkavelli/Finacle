@@ -779,7 +779,7 @@ export default function Home() {
         </nav>
       </main>
 
-      <ChatWidget />
+      <ChatWidget txList={txList} currency={currency} />
 
       <InsightModal insight={selectedInsight} onClose={() => setSelectedInsight(null)} currency={currency} />
 
