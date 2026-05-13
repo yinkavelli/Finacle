@@ -11,7 +11,8 @@ import {
   Plus,
   ArrowUpRight,
   ArrowDownRight,
-  X
+  X,
+  ArrowLeft
 } from "lucide-react";
 import { 
   PieChart, 
@@ -64,7 +65,6 @@ export default function Home() {
   const [uploadProgress, setUploadProgress] = useState('');
   const [user, setUser] = useState(null);
   const fileInputRef = useRef(null);
-  const [chartPeriod, setChartPeriod] = useState('monthly');
   const [selectedInsight, setSelectedInsight] = useState(null);
 
   const formatDate = (dateStr) => {
@@ -152,14 +152,6 @@ export default function Home() {
     transactions: categoryTx[key]
   }));
 
-  // Bar Chart Data (Monthly/Weekly Activity)
-  const getWeekStart = (dateString) => {
-    const d = new Date(dateString);
-    const day = d.getDay() || 7; 
-    d.setDate(d.getDate() - day + 1);
-    return d.toISOString().split('T')[0];
-  };
-
   const periodDataMap = {};
 
   txList.forEach(tx => {
@@ -169,15 +161,9 @@ export default function Home() {
     let bucketKey = '';
     let bucketLabel = '';
     
-    if (chartPeriod === 'monthly') {
-      const d = new Date(tx.date);
-      bucketKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
-      bucketLabel = d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
-    } else {
-      const ws = getWeekStart(tx.date);
-      bucketKey = ws;
-      bucketLabel = `Wk ${formatDate(ws)}`;
-    }
+    const d = new Date(tx.date);
+    bucketKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+    bucketLabel = d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
     
     if (!periodDataMap[bucketKey]) {
       periodDataMap[bucketKey] = { name: bucketLabel, income: 0, spent: 0, sortKey: bucketKey, transactions: [] };
@@ -194,6 +180,16 @@ export default function Home() {
   const dynamicBarData = Object.values(periodDataMap)
     .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
     .slice(-6); // last 6 periods
+
+  const getFullDateRange = () => {
+    if (!txList.length) return '';
+    const dates = txList.map(tx => new Date(tx.date).getTime()).filter(t => !isNaN(t));
+    if (!dates.length) return '';
+    const minDate = new Date(Math.min(...dates));
+    const maxDate = new Date(Math.max(...dates));
+    const format = (d) => d.toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `${format(minDate)} - ${format(maxDate)}`;
+  };
 
   if (isLoading) {
     return (
@@ -229,12 +225,19 @@ export default function Home() {
       <main className="flex-1 flex flex-col relative overflow-y-auto overscroll-y-none">
         {/* Header */}
         <header className="pt-4 pb-3 md:pt-6 md:pb-4 min-h-[4.5rem] md:min-h-[5.5rem] border-b border-[var(--color-card-border)] flex items-center justify-between px-4 md:px-8 sticky top-0 z-20 backdrop-blur-xl bg-[var(--color-background)]/80">
-          <h1 className="text-lg md:text-xl font-semibold dark:text-white text-slate-900">
-            {activeTab === 'dashboard' && 'Overview'}
-            {activeTab === 'transactions' && 'Transactions'}
-            {activeTab === 'analytics' && 'Analytics'}
-            {activeTab === 'settings' && 'Settings'}
-          </h1>
+          <div className="flex flex-col">
+            <h1 className="text-lg md:text-xl font-semibold dark:text-white text-slate-900 leading-tight">
+              {activeTab === 'dashboard' && 'Overview'}
+              {activeTab === 'transactions' && 'Transactions'}
+              {activeTab === 'analytics' && 'Analytics'}
+              {activeTab === 'settings' && 'Settings'}
+            </h1>
+            {txList.length > 0 && (
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                {getFullDateRange()}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-3 md:gap-4">
             
             {/* Hidden File Input */}
@@ -375,20 +378,6 @@ export default function Home() {
                   <div className="relative z-10">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 md:mb-6">
                       <h3 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white">Income vs Spending</h3>
-                      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                        <button 
-                          onClick={() => setChartPeriod('weekly')}
-                          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${chartPeriod === 'weekly' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
-                        >
-                          Weekly
-                        </button>
-                        <button 
-                          onClick={() => setChartPeriod('monthly')}
-                          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${chartPeriod === 'monthly' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
-                        >
-                          Monthly
-                        </button>
-                      </div>
                     </div>
                     <div className="h-48 md:h-64 relative outline-none border-none">
                       <ResponsiveContainer width="100%" height="100%" className="focus:outline-none outline-none border-none" style={{ outline: 'none', border: 'none' }}>
@@ -434,7 +423,8 @@ export default function Home() {
                               setSelectedInsight({ 
                                 type: 'date', 
                                 title: `${payload.name || 'Period'} (Income)`, 
-                                transactions: txs.filter(t => Number(t.amount) > 0) 
+                                transactions: txs.filter(t => Number(t.amount) > 0),
+                                isIncome: true
                               });
                             }}
                           />
@@ -450,7 +440,8 @@ export default function Home() {
                               setSelectedInsight({ 
                                 type: 'date', 
                                 title: `${payload.name || 'Period'} (Spent)`, 
-                                transactions: txs.filter(t => Number(t.amount) < 0) 
+                                transactions: txs.filter(t => Number(t.amount) < 0),
+                                isIncome: false
                               });
                             }}
                           />
@@ -635,19 +626,34 @@ export default function Home() {
 }
 
 function InsightModal({ insight, onClose, currency }) {
-  const [summaryMode, setSummaryMode] = useState('category'); // 'category' or 'month'
+  const [drillStack, setDrillStack] = useState([]);
 
-  if (!insight) return null;
+  useEffect(() => {
+    if (insight) {
+      if (insight.type === 'summary') {
+        setDrillStack([{ mode: 'category', title: insight.title, transactions: insight.transactions, showToggle: true, isIncome: insight.isIncome }]);
+      } else if (insight.type === 'date') {
+        setDrillStack([{ mode: 'category', title: insight.title, transactions: insight.transactions, showToggle: false, isIncome: insight.isIncome }]);
+      } else {
+        setDrillStack([{ mode: 'transactions', title: insight.title, transactions: insight.transactions, showToggle: false, isIncome: insight.isIncome }]);
+      }
+    } else {
+      setDrillStack([]);
+    }
+  }, [insight]);
 
-  const txs = insight.transactions || [];
+  if (!insight || drillStack.length === 0) return null;
+
+  const currentView = drillStack[drillStack.length - 1];
+  const txs = currentView.transactions || [];
   const totalAmount = txs.reduce((sum, tx) => sum + Math.abs(Number(tx.amount)), 0);
 
   let groupedItems = [];
-  if (insight.type === 'summary') {
+  if (currentView.mode === 'category' || currentView.mode === 'month') {
     const groups = {};
     txs.forEach(tx => {
       let key = '';
-      if (summaryMode === 'category') {
+      if (currentView.mode === 'category') {
         key = tx.category || 'Uncategorized';
       } else {
         const d = new Date(tx.date);
@@ -673,16 +679,50 @@ function InsightModal({ insight, onClose, currency }) {
     return `${day}-${month}`;
   };
 
+  const handleGroupClick = (item) => {
+    let nextMode = 'transactions';
+    if (currentView.showToggle) {
+      nextMode = currentView.mode === 'category' ? 'month' : 'category';
+    } else if (currentView.mode === 'category' || currentView.mode === 'month') {
+      nextMode = 'transactions';
+    }
+    setDrillStack(prev => [...prev, {
+      mode: nextMode,
+      title: `${currentView.title} > ${item.name}`,
+      transactions: item.transactions,
+      showToggle: false,
+      isIncome: currentView.isIncome
+    }]);
+  };
+
+  const setSummaryMode = (mode) => {
+    setDrillStack(prev => {
+      const newStack = [...prev];
+      newStack[newStack.length - 1] = { ...newStack[newStack.length - 1], mode };
+      return newStack;
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
         <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
           <div>
-            <h3 className="font-bold text-lg text-slate-900 dark:text-white">
-              {insight.title}
-            </h3>
+            <div className="flex items-center gap-2">
+              {drillStack.length > 1 && (
+                <button 
+                  onClick={() => setDrillStack(prev => prev.slice(0, -1))}
+                  className="p-1 -ml-1 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+              )}
+              <h3 className="font-bold text-lg text-slate-900 dark:text-white truncate max-w-[200px] md:max-w-[250px]">
+                {currentView.title}
+              </h3>
+            </div>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className={`text-sm font-bold ${insight.isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
+              <span className={`text-sm font-bold ${currentView.isIncome === true ? 'text-emerald-600 dark:text-emerald-400' : currentView.isIncome === false ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-300'}`}>
                 Total: {formatCurrencyLocal(totalAmount)}
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -698,18 +738,18 @@ function InsightModal({ insight, onClose, currency }) {
           </button>
         </div>
         
-        {insight.type === 'summary' && (
+        {currentView.showToggle && (
           <div className="px-4 pt-4 pb-2">
             <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
               <button 
                 onClick={() => setSummaryMode('category')}
-                className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${summaryMode === 'category' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${currentView.mode === 'category' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
               >
                 By Category
               </button>
               <button 
                 onClick={() => setSummaryMode('month')}
-                className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${summaryMode === 'month' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${currentView.mode === 'month' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
               >
                 By Month
               </button>
@@ -724,17 +764,17 @@ function InsightModal({ insight, onClose, currency }) {
             </div>
           ) : (
             <div className="space-y-3">
-              {insight.type === 'summary' ? (
+              {currentView.mode === 'category' || currentView.mode === 'month' ? (
                 groupedItems.map((item, idx) => {
                   const pct = totalAmount > 0 ? ((item.amount / totalAmount) * 100).toFixed(1) : 0;
                   return (
-                    <div key={idx} className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                    <div key={idx} onClick={() => handleGroupClick(item)} className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                       <div className="flex flex-col gap-1">
                         <span className="font-semibold text-slate-900 dark:text-white text-sm">{item.name}</span>
                         <span className="text-xs text-slate-500 dark:text-slate-400">{item.transactions.length} transaction{item.transactions.length !== 1 ? 's' : ''}</span>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <span className={`text-sm font-bold ${insight.isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+                        <span className={`text-sm font-bold ${currentView.isIncome === true ? 'text-emerald-600 dark:text-emerald-400' : currentView.isIncome === false ? 'text-slate-900 dark:text-white' : 'text-slate-900 dark:text-white'}`}>
                           {formatCurrencyLocal(item.amount)}
                         </span>
                         <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
