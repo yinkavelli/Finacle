@@ -63,7 +63,16 @@ export default function Home() {
   const [uploadProgress, setUploadProgress] = useState('');
   const [user, setUser] = useState(null);
   const fileInputRef = useRef(null);
+  const [chartPeriod, setChartPeriod] = useState('monthly');
+  const [selectedInsight, setSelectedInsight] = useState(null);
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = d.toLocaleString('en-US', { month: 'short' });
+    return `${day}-${month}`;
+  };
   const supabase = createClient();
   const router = useRouter();
 
@@ -128,53 +137,62 @@ export default function Home() {
 
   // Pie Chart Data (Group Expenses by Category)
   const categoryTotals = {};
+  const categoryTx = {};
   txList.filter(tx => Number(tx.amount) < 0).forEach(tx => {
     categoryTotals[tx.category] = (categoryTotals[tx.category] || 0) + Math.abs(Number(tx.amount));
+    if (!categoryTx[tx.category]) categoryTx[tx.category] = [];
+    categoryTx[tx.category].push(tx);
   });
   const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
   const dynamicExpensesData = Object.keys(categoryTotals).map((key, i) => ({
     name: key,
     value: categoryTotals[key],
-    color: colors[i % colors.length]
+    color: colors[i % colors.length],
+    transactions: categoryTx[key]
   }));
 
-  // Bar Chart Data (Weekly Activity fallback to latest)
-  let targetEndDate = new Date();
-  let isDataStale = false;
-  
-  if (txList.length > 0) {
-    const dates = txList.map(tx => new Date(tx.date).getTime());
-    const maxDate = new Date(Math.max(...dates));
-    
-    // If the latest transaction is older than 7 days from today, fallback to that week
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    if (maxDate < sevenDaysAgo) {
-      targetEndDate = maxDate;
-      isDataStale = true;
-    }
-  }
-
-  const weeklyDates = Array.from({length: 7}, (_, i) => {
-    const d = new Date(targetEndDate);
-    d.setDate(d.getDate() - (6 - i));
+  // Bar Chart Data (Monthly/Weekly Activity)
+  const getWeekStart = (dateString) => {
+    const d = new Date(dateString);
+    const day = d.getDay() || 7; 
+    d.setDate(d.getDate() - day + 1);
     return d.toISOString().split('T')[0];
-  });
+  };
 
-  const weeklyTotals = {};
-  weeklyDates.forEach(date => weeklyTotals[date] = 0);
+  const periodDataMap = {};
 
-  txList.filter(tx => Number(tx.amount) < 0).forEach(tx => {
-    if (weeklyTotals[tx.date] !== undefined) {
-      weeklyTotals[tx.date] += Math.abs(Number(tx.amount));
+  txList.forEach(tx => {
+    const isIncome = Number(tx.amount) > 0;
+    const amount = Math.abs(Number(tx.amount));
+    
+    let bucketKey = '';
+    let bucketLabel = '';
+    
+    if (chartPeriod === 'monthly') {
+      const d = new Date(tx.date);
+      bucketKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+      bucketLabel = d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
+    } else {
+      const ws = getWeekStart(tx.date);
+      bucketKey = ws;
+      bucketLabel = `Wk ${formatDate(ws)}`;
     }
+    
+    if (!periodDataMap[bucketKey]) {
+      periodDataMap[bucketKey] = { name: bucketLabel, income: 0, spent: 0, sortKey: bucketKey, transactions: [] };
+    }
+    
+    if (isIncome) {
+      periodDataMap[bucketKey].income += amount;
+    } else {
+      periodDataMap[bucketKey].spent += amount;
+    }
+    periodDataMap[bucketKey].transactions.push(tx);
   });
 
-  const dynamicBarData = weeklyDates.map(date => ({
-    name: date.slice(5),
-    spent: weeklyTotals[date]
-  }));
+  const dynamicBarData = Object.values(periodDataMap)
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+    .slice(-6); // last 6 periods
 
   if (isLoading) {
     return (
@@ -345,9 +363,16 @@ export default function Home() {
                             dataKey="value"
                             stroke="rgba(255,255,255,0.1)"
                             strokeWidth={2}
+                            style={{ outline: 'none' }}
                           >
                             {dynamicExpensesData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={entry.color} 
+                                style={{ outline: 'none' }}
+                                className="cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => setSelectedInsight({ type: 'category', title: entry.name, transactions: entry.transactions })}
+                              />
                             ))}
                           </Pie>
                           <Tooltip 
@@ -372,21 +397,34 @@ export default function Home() {
                 <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-indigo-500/30 bg-white dark:bg-slate-950 dark:bg-gradient-to-br dark:from-slate-900/80 dark:to-slate-950/80 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
                   <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
                   <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4 md:mb-6">
-                      <h3 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white">Weekly Activity</h3>
-                      {isDataStale && (
-                        <span className="text-[10px] md:text-xs text-amber-600 dark:text-amber-400 font-medium px-2 py-1 bg-amber-100 dark:bg-amber-500/10 rounded-full border border-amber-200 dark:border-amber-500/20">
-                          Older data (Please upload statement)
-                        </span>
-                      )}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 md:mb-6">
+                      <h3 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white">Income vs Spending</h3>
+                      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                        <button 
+                          onClick={() => setChartPeriod('weekly')}
+                          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${chartPeriod === 'weekly' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                        >
+                          Weekly
+                        </button>
+                        <button 
+                          onClick={() => setChartPeriod('monthly')}
+                          className={`px-3 py-1 rounded text-xs font-medium transition-colors ${chartPeriod === 'monthly' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                        >
+                          Monthly
+                        </button>
+                      </div>
                     </div>
                     <div className="h-48 md:h-64 relative">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={dynamicBarData}>
+                      <ResponsiveContainer width="100%" height="100%" className="focus:outline-none">
+                        <BarChart data={dynamicBarData} style={{ outline: 'none' }}>
                           <defs>
-                            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="barSpent" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor="#818cf8" />
                               <stop offset="100%" stopColor="#3730a3" stopOpacity={0.8} />
+                            </linearGradient>
+                            <linearGradient id="barIncome" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#34d399" />
+                              <stop offset="100%" stopColor="#047857" stopOpacity={0.8} />
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -395,9 +433,24 @@ export default function Home() {
                           <Tooltip 
                             cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
                             contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(99, 102, 241, 0.5)', borderRadius: '12px', color: '#fff' }}
-                            formatter={(value) => [currency === 'AED' ? 'Đ ' + value : '$' + value, "Spent"]}
+                            formatter={(value, name) => [currency === 'AED' ? 'Đ ' + value : '$' + value, name === 'income' ? 'Income' : 'Spent']}
                           />
-                          <Bar dataKey="spent" fill="url(#barGradient)" radius={[6, 6, 0, 0]} />
+                          <Bar 
+                            dataKey="income" 
+                            fill="url(#barIncome)" 
+                            radius={[4, 4, 0, 0]} 
+                            style={{ outline: 'none' }}
+                            className="cursor-pointer hover:opacity-80 transition-opacity outline-none focus:outline-none"
+                            onClick={(data) => setSelectedInsight({ type: 'date', title: `${data.name} (Income)`, transactions: data.transactions.filter(t => Number(t.amount) > 0) })}
+                          />
+                          <Bar 
+                            dataKey="spent" 
+                            fill="url(#barSpent)" 
+                            radius={[4, 4, 0, 0]} 
+                            style={{ outline: 'none' }}
+                            className="cursor-pointer hover:opacity-80 transition-opacity outline-none focus:outline-none"
+                            onClick={(data) => setSelectedInsight({ type: 'date', title: `${data.name} (Spent)`, transactions: data.transactions.filter(t => Number(t.amount) < 0) })}
+                          />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -471,7 +524,7 @@ export default function Home() {
                         <div className="flex flex-col gap-1">
                           <span className="font-medium text-slate-900 dark:text-white text-sm">{tx.description}</span>
                           <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
-                            <span>{tx.date}</span>
+                            <span>{formatDate(tx.date)}</span>
                             <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
                             <span>{tx.category}</span>
                           </div>
@@ -503,7 +556,7 @@ export default function Home() {
                       <tbody className="text-slate-600 dark:text-slate-300">
                         {txList.map((tx) => (
                           <tr key={tx.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group cursor-pointer">
-                            <td className="py-2 md:py-4 text-xs md:text-sm opacity-80 whitespace-nowrap">{tx.date}</td>
+                            <td className="py-2 md:py-4 text-xs md:text-sm opacity-80 whitespace-nowrap">{formatDate(tx.date)}</td>
                             <td className="py-2 md:py-4 text-sm md:text-base font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{tx.description}</td>
                             <td className="py-2 md:py-4">
                               <span className="px-2 py-0.5 md:px-2.5 md:py-1 rounded-md text-[10px] md:text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
@@ -566,6 +619,57 @@ export default function Home() {
         </nav>
       </main>
       <ChatWidget />
+
+      {/* Insight Modal */}
+      {selectedInsight && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+            <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
+              <div>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+                  {selectedInsight.title}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {selectedInsight.transactions.length} transaction{selectedInsight.transactions.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedInsight(null)}
+                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="overflow-y-auto p-4 md:p-5 flex-1">
+              {selectedInsight.transactions.length === 0 ? (
+                <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+                  No transactions found for this insight.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {selectedInsight.transactions.map((tx) => (
+                    <div key={tx.id} className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold text-slate-900 dark:text-white text-sm">{tx.description}</span>
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                          <span>{formatDate(tx.date)}</span>
+                          <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                          <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">{tx.category}</span>
+                        </div>
+                      </div>
+                      <div className={`text-sm font-bold ${tx.amount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+                        {formatCurrency(tx.amount, currency, true)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
