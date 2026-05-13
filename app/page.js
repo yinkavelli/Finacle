@@ -263,14 +263,15 @@ export default function Home() {
           {activeTab === 'dashboard' && (
             <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {/* Top Metrics Row */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+              <div className="grid grid-cols-2 gap-3 md:gap-6">
                 <MetricCard 
-                  title="Net Balance" 
-                  amount={formatCurrency(totalBalance, currency)} 
-                  subtitle="Overall" 
-                  subtitleColor="neutral" 
-                  variant="indigo" 
-                  icon={<ArrowUpRight size={16} strokeWidth={2.5} />} 
+                  title="Total Income" 
+                  amount={formatCurrency(totalIncome, currency)} 
+                  subtitle="All-time" 
+                  subtitleColor="up" 
+                  variant="violet" 
+                  icon={<Plus size={16} strokeWidth={2.5} />} 
+                  onClick={() => setSelectedInsight({ type: 'summary', title: 'Total Income', isIncome: true, transactions: txList.filter(t => Number(t.amount) > 0) })}
                 />
                 <MetricCard 
                   title="Total Spent" 
@@ -279,47 +280,8 @@ export default function Home() {
                   subtitleColor="down" 
                   variant="emerald" 
                   icon={<ArrowDownRight size={16} strokeWidth={2.5} />} 
+                  onClick={() => setSelectedInsight({ type: 'summary', title: 'Total Spent', isIncome: false, transactions: txList.filter(t => Number(t.amount) < 0) })}
                 />
-                <div className="col-span-2 md:col-span-1">
-                  <MetricCard 
-                    title="Total Income" 
-                    amount={formatCurrency(totalIncome, currency)} 
-                    subtitle="All-time" 
-                    subtitleColor="up" 
-                    variant="violet" 
-                    icon={<Plus size={16} strokeWidth={2.5} />} 
-                  />
-                </div>
-              </div>
-
-              {/* Income vs Spending Progress Bar */}
-              <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
-                <h3 className="text-sm md:text-base font-semibold mb-3 text-slate-900 dark:text-white">Income vs Spending</h3>
-                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 md:h-4 mb-2 overflow-hidden flex">
-                  <div className="bg-emerald-500 h-full" style={{ width: `${totalIncome === 0 ? 0 : Math.min(100, (totalIncome / (totalIncome + totalSpending)) * 100)}%` }}></div>
-                  <div className="bg-indigo-500 h-full" style={{ width: `${totalSpending === 0 ? 0 : Math.min(100, (totalSpending / (totalIncome + totalSpending)) * 100)}%` }}></div>
-                </div>
-                <div className="flex justify-between text-xs font-medium">
-                  <span className="text-emerald-600 dark:text-emerald-400">Income: {Math.round((totalIncome / (totalIncome + totalSpending || 1)) * 100)}%</span>
-                  <span className="text-indigo-600 dark:text-indigo-400">Spending: {Math.round((totalSpending / (totalIncome + totalSpending || 1)) * 100)}%</span>
-                </div>
-              </div>
-
-              {/* AI Insights Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-emerald-500/50 bg-white dark:bg-slate-950 dark:bg-gradient-to-br dark:from-emerald-900/40 dark:to-emerald-950/20 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)] flex gap-3 md:gap-4 items-start group">
-                <div className="shimmer-overlay shimmer-overlay-emerald"></div>
-                <div className="absolute top-0 left-0 w-1 h-full bg-[var(--color-accent-positive)]"></div>
-                <div className="relative z-10 flex gap-4 w-full">
-                  <div className="p-3 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
-                    <Bot size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-base md:text-lg font-semibold mb-1 text-slate-900 dark:text-white">AI Financial Insight</h3>
-                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs md:text-sm">
-                      You've spent 20% less on Food & Dining this week compared to last week. If you maintain this trend, you could save an additional $140 by the end of the month. Great job!
-                    </p>
-                  </div>
-                </div>
               </div>
 
               {/* Charts Row */}
@@ -428,9 +390,9 @@ export default function Home() {
                         </button>
                       </div>
                     </div>
-                    <div className="h-48 md:h-64 relative">
-                      <ResponsiveContainer width="100%" height="100%" className="focus:outline-none">
-                        <BarChart data={dynamicBarData} style={{ outline: 'none' }}>
+                    <div className="h-48 md:h-64 relative outline-none border-none">
+                      <ResponsiveContainer width="100%" height="100%" className="focus:outline-none outline-none border-none" style={{ outline: 'none', border: 'none' }}>
+                        <BarChart data={dynamicBarData} style={{ outline: 'none', border: 'none' }}>
                           <defs>
                             <linearGradient id="barSpent" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor="#818cf8" />
@@ -662,55 +624,156 @@ export default function Home() {
       <ChatWidget />
 
       {/* Insight Modal */}
-      {selectedInsight && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
-            <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
-              <div>
-                <h3 className="font-bold text-lg text-slate-900 dark:text-white">
-                  {selectedInsight.title}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {selectedInsight.transactions.length} transaction{selectedInsight.transactions.length !== 1 ? 's' : ''}
-                </p>
-              </div>
+      <InsightModal 
+        insight={selectedInsight} 
+        onClose={() => setSelectedInsight(null)} 
+        currency={currency} 
+      />
+
+    </div>
+  );
+}
+
+function InsightModal({ insight, onClose, currency }) {
+  const [summaryMode, setSummaryMode] = useState('category'); // 'category' or 'month'
+
+  if (!insight) return null;
+
+  const txs = insight.transactions || [];
+  const totalAmount = txs.reduce((sum, tx) => sum + Math.abs(Number(tx.amount)), 0);
+
+  let groupedItems = [];
+  if (insight.type === 'summary') {
+    const groups = {};
+    txs.forEach(tx => {
+      let key = '';
+      if (summaryMode === 'category') {
+        key = tx.category || 'Uncategorized';
+      } else {
+        const d = new Date(tx.date);
+        key = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      }
+      if (!groups[key]) groups[key] = { name: key, amount: 0, transactions: [] };
+      groups[key].amount += Math.abs(Number(tx.amount));
+      groups[key].transactions.push(tx);
+    });
+    groupedItems = Object.values(groups).sort((a, b) => b.amount - a.amount);
+  }
+
+  const formatCurrencyLocal = (amt) => {
+    const formatted = Number(Math.abs(amt)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return currency === 'AED' ? `Đ ${formatted}` : `$${formatted}`;
+  };
+
+  const formatDateLocal = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = d.toLocaleString('en-US', { month: 'short' });
+    return `${day}-${month}`;
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+        <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
+          <div>
+            <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+              {insight.title}
+            </h3>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className={`text-sm font-bold ${insight.isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                Total: {formatCurrencyLocal(totalAmount)}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                ({txs.length} item{txs.length !== 1 ? 's' : ''})
+              </span>
+            </div>
+          </div>
+          <button 
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        
+        {insight.type === 'summary' && (
+          <div className="px-4 pt-4 pb-2">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
               <button 
-                onClick={() => setSelectedInsight(null)}
-                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                onClick={() => setSummaryMode('category')}
+                className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${summaryMode === 'category' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
               >
-                <X size={20} />
+                By Category
+              </button>
+              <button 
+                onClick={() => setSummaryMode('month')}
+                className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${summaryMode === 'month' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+              >
+                By Month
               </button>
             </div>
-            
-            <div className="overflow-y-auto p-4 md:p-5 flex-1">
-              {selectedInsight.transactions.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
-                  No transactions found for this insight.
-                </div>
+          </div>
+        )}
+
+        <div className="overflow-y-auto p-4 md:p-5 flex-1">
+          {txs.length === 0 ? (
+            <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+              No transactions found.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {insight.type === 'summary' ? (
+                groupedItems.map((item, idx) => {
+                  const pct = totalAmount > 0 ? ((item.amount / totalAmount) * 100).toFixed(1) : 0;
+                  return (
+                    <div key={idx} className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold text-slate-900 dark:text-white text-sm">{item.name}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{item.transactions.length} transaction{item.transactions.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`text-sm font-bold ${insight.isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+                          {formatCurrencyLocal(item.amount)}
+                        </span>
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                          {pct}% of Total
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
               ) : (
-                <div className="space-y-3">
-                  {selectedInsight.transactions.map((tx) => (
+                txs.map((tx) => {
+                  const amt = Math.abs(Number(tx.amount));
+                  const pct = totalAmount > 0 ? ((amt / totalAmount) * 100).toFixed(1) : 0;
+                  return (
                     <div key={tx.id} className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                       <div className="flex flex-col gap-1">
                         <span className="font-semibold text-slate-900 dark:text-white text-sm">{tx.description}</span>
                         <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
-                          <span>{formatDate(tx.date)}</span>
+                          <span>{formatDateLocal(tx.date)}</span>
                           <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
                           <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">{tx.category}</span>
                         </div>
                       </div>
-                      <div className={`text-sm font-bold ${tx.amount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
-                        {formatCurrency(tx.amount, currency, true)}
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`text-sm font-bold ${tx.amount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+                          {formatCurrencyLocal(tx.amount)}
+                        </span>
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                          {pct}% of Total
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  );
+                })
               )}
             </div>
-          </div>
+          )}
         </div>
-      )}
-
+      </div>
     </div>
   );
 }
@@ -732,7 +795,7 @@ function NavItem({ icon, label, active, onClick }) {
   );
 }
 
-function MetricCard({ title, amount, subtitle, icon, variant = 'indigo', subtitleColor = 'neutral' }) {
+function MetricCard({ title, amount, subtitle, icon, variant = 'indigo', subtitleColor = 'neutral', onClick }) {
   const colorMap = {
     indigo: {
       cardGrad: 'bg-white dark:bg-slate-950 dark:from-indigo-900/40 dark:to-indigo-950/20 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)] border-slate-200 dark:border-indigo-500/50',
@@ -769,7 +832,7 @@ function MetricCard({ title, amount, subtitle, icon, variant = 'indigo', subtitl
   const colors = colorMap[variant] || colorMap.indigo;
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border ${colors.cardGrad} dark:bg-gradient-to-br p-2.5 md:p-4 transition-all duration-200 hover:scale-[0.98] active:scale-95 cursor-pointer group`}>
+    <div onClick={onClick} className={`relative overflow-hidden rounded-2xl border ${colors.cardGrad} dark:bg-gradient-to-br p-2.5 md:p-4 transition-all duration-200 hover:scale-[0.98] active:scale-95 ${onClick ? 'cursor-pointer' : ''} group`}>
       <div className={`shimmer-overlay ${colors.shimmer}`}></div>
       
       <div className="relative z-10">
