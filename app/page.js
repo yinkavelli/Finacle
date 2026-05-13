@@ -364,6 +364,14 @@ export default function Home() {
                             stroke="rgba(255,255,255,0.1)"
                             strokeWidth={2}
                             style={{ outline: 'none' }}
+                            onClick={(data) => {
+                              const payload = data?.payload || data || {};
+                              setSelectedInsight({ 
+                                type: 'category', 
+                                title: payload.name || 'Category', 
+                                transactions: payload.transactions || [] 
+                              });
+                            }}
                           >
                             {dynamicExpensesData.map((entry, index) => (
                               <Cell 
@@ -371,13 +379,18 @@ export default function Home() {
                                 fill={entry.color} 
                                 style={{ outline: 'none' }}
                                 className="cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => setSelectedInsight({ type: 'category', title: entry.name, transactions: entry.transactions })}
                               />
                             ))}
                           </Pie>
                           <Tooltip 
                             contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(99, 102, 241, 0.5)', borderRadius: '12px', backdropFilter: 'blur(10px)', color: '#fff' }}
                             itemStyle={{ color: '#fff' }}
+                            formatter={(value, name) => [
+                              currency === 'AED' 
+                                ? 'Đ ' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                : '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                              name
+                            ]}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -429,11 +442,22 @@ export default function Home() {
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                           <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} axisLine={false} tickLine={false} />
-                          <YAxis stroke="#94a3b8" fontSize={12} axisLine={false} tickLine={false} tickFormatter={(val) => currency === 'AED' ? 'Đ ' + val : '$' + val} />
+                          <YAxis 
+                            stroke="#94a3b8" 
+                            fontSize={12} 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tickFormatter={(val) => currency === 'AED' ? 'Đ ' + Number(val).toLocaleString('en-US') : '$' + Number(val).toLocaleString('en-US')} 
+                          />
                           <Tooltip 
                             cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
                             contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(99, 102, 241, 0.5)', borderRadius: '12px', color: '#fff' }}
-                            formatter={(value, name) => [currency === 'AED' ? 'Đ ' + value : '$' + value, name === 'income' ? 'Income' : 'Spent']}
+                            formatter={(value, name) => [
+                              currency === 'AED' 
+                                ? 'Đ ' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                : '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                              name === 'income' ? 'Income' : 'Spent'
+                            ]}
                           />
                           <Bar 
                             dataKey="income" 
@@ -441,7 +465,15 @@ export default function Home() {
                             radius={[4, 4, 0, 0]} 
                             style={{ outline: 'none' }}
                             className="cursor-pointer hover:opacity-80 transition-opacity outline-none focus:outline-none"
-                            onClick={(data) => setSelectedInsight({ type: 'date', title: `${data.name} (Income)`, transactions: data.transactions.filter(t => Number(t.amount) > 0) })}
+                            onClick={(data) => {
+                              const payload = data?.payload || data || {};
+                              const txs = payload.transactions || [];
+                              setSelectedInsight({ 
+                                type: 'date', 
+                                title: `${payload.name || 'Period'} (Income)`, 
+                                transactions: txs.filter(t => Number(t.amount) > 0) 
+                              });
+                            }}
                           />
                           <Bar 
                             dataKey="spent" 
@@ -449,7 +481,15 @@ export default function Home() {
                             radius={[4, 4, 0, 0]} 
                             style={{ outline: 'none' }}
                             className="cursor-pointer hover:opacity-80 transition-opacity outline-none focus:outline-none"
-                            onClick={(data) => setSelectedInsight({ type: 'date', title: `${data.name} (Spent)`, transactions: data.transactions.filter(t => Number(t.amount) < 0) })}
+                            onClick={(data) => {
+                              const payload = data?.payload || data || {};
+                              const txs = payload.transactions || [];
+                              setSelectedInsight({ 
+                                type: 'date', 
+                                title: `${payload.name || 'Period'} (Spent)`, 
+                                transactions: txs.filter(t => Number(t.amount) < 0) 
+                              });
+                            }}
                           />
                         </BarChart>
                       </ResponsiveContainer>
