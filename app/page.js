@@ -2,10 +2,14 @@
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ChatWidget } from "@/components/ChatWidget";
+import { TransactionsTab } from "@/components/TransactionsTab";
+import { BudgetTab } from "@/components/BudgetTab";
+import { InsightsTab } from "@/components/InsightsTab";
 import {
   LayoutDashboard,
-  WalletCards,
-  PieChart as ChartIcon,
+  Receipt,
+  PiggyBank,
+  BarChart2,
   Settings,
   Plus,
   ArrowDownRight,
@@ -32,10 +36,11 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
 const TABS = {
-  DASHBOARD: "dashboard",
+  DASHBOARD:    "dashboard",
   TRANSACTIONS: "transactions",
-  ANALYTICS: "analytics",
-  SETTINGS: "settings",
+  BUDGET:       "budget",
+  INSIGHTS:     "insights",
+  SETTINGS:     "settings",
 };
 
 const CHART_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#6366f1", "#14b8a6"];
@@ -298,11 +303,12 @@ export default function Home() {
           </div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2 mt-4">
-          <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard" active={activeTab === TABS.DASHBOARD} onClick={() => changeTab(TABS.DASHBOARD)} />
-          <NavItem icon={<WalletCards size={20} />} label="Transactions" active={activeTab === TABS.TRANSACTIONS} onClick={() => changeTab(TABS.TRANSACTIONS)} />
-          <NavItem icon={<ChartIcon size={20} />} label="Analytics" active={activeTab === TABS.ANALYTICS} onClick={() => changeTab(TABS.ANALYTICS)} />
-          <NavItem icon={<Settings size={20} />} label="Settings" active={activeTab === TABS.SETTINGS} onClick={() => changeTab(TABS.SETTINGS)} />
+        <nav className="flex-1 px-4 space-y-1 mt-4">
+          <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard"    active={activeTab === TABS.DASHBOARD}    onClick={() => changeTab(TABS.DASHBOARD)}    />
+          <NavItem icon={<Receipt size={20} />}         label="Transactions" active={activeTab === TABS.TRANSACTIONS} onClick={() => changeTab(TABS.TRANSACTIONS)} />
+          <NavItem icon={<PiggyBank size={20} />}       label="Budget"       active={activeTab === TABS.BUDGET}       onClick={() => changeTab(TABS.BUDGET)}       />
+          <NavItem icon={<BarChart2 size={20} />}       label="Insights"     active={activeTab === TABS.INSIGHTS}     onClick={() => changeTab(TABS.INSIGHTS)}     />
+          <NavItem icon={<Settings size={20} />}        label="Settings"     active={activeTab === TABS.SETTINGS}     onClick={() => changeTab(TABS.SETTINGS)}     />
         </nav>
       </aside>
 
@@ -312,10 +318,11 @@ export default function Home() {
         <header className="pt-4 pb-3 md:pt-6 md:pb-4 min-h-[4.5rem] md:min-h-[5.5rem] border-b border-[var(--color-card-border)] flex items-center justify-between px-4 md:px-8 sticky top-0 z-20 backdrop-blur-xl bg-[var(--color-background)]/80">
           <div className="flex flex-col min-w-0 pr-2">
             <h1 className="text-lg md:text-xl font-semibold dark:text-white text-slate-900 leading-tight truncate">
-              {activeTab === TABS.DASHBOARD && "Overview"}
+              {activeTab === TABS.DASHBOARD    && "Overview"}
               {activeTab === TABS.TRANSACTIONS && "Transactions"}
-              {activeTab === TABS.ANALYTICS && "Analytics"}
-              {activeTab === TABS.SETTINGS && "Settings"}
+              {activeTab === TABS.BUDGET       && "Budget"}
+              {activeTab === TABS.INSIGHTS     && "Insights"}
+              {activeTab === TABS.SETTINGS     && "Settings"}
             </h1>
             {txList.length > 0 && (
               <span className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 truncate whitespace-nowrap">
@@ -621,21 +628,14 @@ export default function Home() {
             </div>
           )}
 
-          {/* ANALYTICS */}
-          {activeTab === TABS.ANALYTICS && (
-            <div className="space-y-6 animate-slide-up">
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-12 flex flex-col items-center justify-center gap-4 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center">
-                  <ChartIcon size={28} className="text-indigo-500 dark:text-indigo-400" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Analytics Coming Soon</h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xs">
-                    Deep-dive trends, savings rate, and year-over-year comparisons are on the roadmap.
-                  </p>
-                </div>
-              </div>
-            </div>
+          {/* BUDGET */}
+          {activeTab === TABS.BUDGET && (
+            <BudgetTab txList={txList} currency={currency} userId={user?.id} />
+          )}
+
+          {/* INSIGHTS */}
+          {activeTab === TABS.INSIGHTS && (
+            <InsightsTab txList={txList} currency={currency} />
           )}
 
           {/* SETTINGS */}
@@ -685,94 +685,27 @@ export default function Home() {
 
           {/* TRANSACTIONS */}
           {activeTab === TABS.TRANSACTIONS && (
-            <div className="animate-slide-up">
-              <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-indigo-500/30 bg-white dark:bg-slate-950 dark:bg-gradient-to-br dark:from-slate-900/80 dark:to-slate-950/80 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
-                <div className="shimmer-overlay shimmer-overlay-indigo opacity-30"></div>
-                <div className="relative z-10">
-                  <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-slate-900 dark:text-white">Transaction History</h3>
-
-                  {/* Mobile */}
-                  <div className="md:hidden flex flex-col">
-                    {txList.map((tx) => (
-                      <div key={tx.id} className="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-medium text-slate-900 dark:text-white text-sm">{tx.description}</span>
-                          <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
-                            <span>{formatDate(tx.date)}</span>
-                            <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                            <span>{tx.category}</span>
-                          </div>
-                        </div>
-                        <div className={`text-sm font-semibold ${tx.amount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>
-                          {formatCurrency(tx.amount, currency, true)}
-                        </div>
-                      </div>
-                    ))}
-                    {txList.length === 0 && (
-                      <div className="py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
-                        No transactions found. Upload a CSV statement or use the Load Demo button to begin.
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Desktop */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] md:text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          <th className="pb-2 md:pb-3 font-medium">Date</th>
-                          <th className="pb-2 md:pb-3 font-medium">Description</th>
-                          <th className="pb-2 md:pb-3 font-medium">Category</th>
-                          <th className="pb-2 md:pb-3 font-medium hidden sm:table-cell">Status</th>
-                          <th className="pb-2 md:pb-3 font-medium text-right">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody className="text-slate-600 dark:text-slate-300">
-                        {txList.map((tx) => (
-                          <tr key={tx.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group cursor-pointer">
-                            <td className="py-2 md:py-4 text-xs md:text-sm opacity-80 whitespace-nowrap">{formatDate(tx.date)}</td>
-                            <td className="py-2 md:py-4 text-sm md:text-base font-medium text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{tx.description}</td>
-                            <td className="py-2 md:py-4">
-                              <span className="px-2 py-0.5 md:px-2.5 md:py-1 rounded-md text-[10px] md:text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                                {tx.category}
-                              </span>
-                            </td>
-                            <td className="py-2 md:py-4 text-xs md:text-sm opacity-80 hidden sm:table-cell">{tx.status}</td>
-                            <td className={`py-2 md:py-4 text-right text-sm md:text-base font-semibold whitespace-nowrap ${tx.amount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>
-                              {formatCurrency(tx.amount, currency, true)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {txList.length === 0 && (
-                      <div className="py-12 text-center text-slate-500 dark:text-slate-400">
-                        No transactions found. Upload a CSV statement or use the Load Demo button to begin.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <TransactionsTab txList={txList} currency={currency} />
           )}
         </div>
 
         {/* Mobile Bottom Nav */}
         <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-[var(--color-background)]/90 backdrop-blur-xl border-t border-[var(--color-card-border)] pb-safe">
-          <div className="flex justify-around items-center px-2 py-2">
+          <div className="flex justify-around items-center px-1 py-2">
             {[
-              { tab: TABS.DASHBOARD, icon: <LayoutDashboard size={20} />, label: "Home" },
-              { tab: TABS.TRANSACTIONS, icon: <WalletCards size={20} />, label: "History" },
-              { tab: TABS.ANALYTICS, icon: <ChartIcon size={20} />, label: "Analytics" },
-              { tab: TABS.SETTINGS, icon: <Settings size={20} />, label: "Settings" },
+              { tab: TABS.DASHBOARD,    icon: <LayoutDashboard size={18} />, label: "Home"    },
+              { tab: TABS.TRANSACTIONS, icon: <Receipt size={18} />,         label: "Txns"    },
+              { tab: TABS.BUDGET,       icon: <PiggyBank size={18} />,       label: "Budget"  },
+              { tab: TABS.INSIGHTS,     icon: <BarChart2 size={18} />,       label: "Insights"},
+              { tab: TABS.SETTINGS,     icon: <Settings size={18} />,        label: "Settings"},
             ].map(({ tab, icon, label }) => (
               <button
                 key={tab}
                 onClick={() => changeTab(tab)}
-                className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${activeTab === tab ? "text-indigo-600 dark:text-indigo-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"}`}
+                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-colors ${activeTab === tab ? "text-indigo-600 dark:text-indigo-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"}`}
               >
                 {icon}
-                <span className="text-[10px] font-medium">{label}</span>
+                <span className="text-[9px] font-medium">{label}</span>
               </button>
             ))}
           </div>
