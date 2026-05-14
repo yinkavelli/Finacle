@@ -636,7 +636,12 @@ export default function Home() {
 
           {/* INSIGHTS */}
           {activeTab === TABS.INSIGHTS && (
-            <InsightsTab txList={txList} currency={currency} />
+            <InsightsTab
+              txList={txList}
+              currency={currency}
+              onCategoryClick={setSelectedInsight}
+              userId={user?.id}
+            />
           )}
 
           {/* SETTINGS */}

@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, X,
   TrendingUp, TrendingDown, Minus,
   AlertTriangle, Sparkles, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import {
   ResponsiveContainer,
-  ComposedChart, BarChart, Bar,
+  ComposedChart, BarChart, Bar, ReferenceLine,
   Line, XAxis, YAxis,
-  CartesianGrid, Tooltip, Cell, Legend,
+  CartesianGrid, Tooltip, Cell,
 } from "recharts";
 import { getCategoryConfig } from "@/utils/categoryConfig";
 
@@ -46,7 +46,7 @@ const SlimTooltip = ({ active, payload, label, currency }) => {
   if (!active || !payload?.length) return null;
   const fmt = (v) => {
     const s = Math.abs(v).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
-    return currency === "AED" ? `AED ${s}` : `$${s}`;
+    return currency === "AED" ? `Đ ${s}` : `$${s}`;
   };
   return (
     <div className="bg-slate-900/95 border border-white/10 rounded-xl px-3 py-2.5 shadow-xl min-w-[140px]">
@@ -63,17 +63,15 @@ const SlimTooltip = ({ active, payload, label, currency }) => {
 
 // ── main component ────────────────────────────────────────────────────────────
 
-export function InsightsTab({ txList, currency }) {
-  const fmt = (n) => {
-    const s = Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
-    return currency === "AED" ? `AED ${s}` : `$${s}`;
+export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
+  // ── currency formatter (Đ symbol) ─────────────────────────────────────────
+  const fmt = (n, dec = 0) => {
+    const s = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    return currency === "AED" ? `Đ ${s}` : `$${s}`;
   };
-  const fmtDec = (n) => {
-    const s = Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
-    return currency === "AED" ? `AED ${s}` : `$${s}`;
-  };
+  const fmtDec = (n) => fmt(n, 2);
 
-  // Available months (sorted)
+  // ── month navigation ──────────────────────────────────────────────────────
   const availableMonths = useMemo(() =>
     [...new Set(txList.map(tx => tx.date.slice(0,7)))].sort()
   , [txList]);
@@ -82,19 +80,36 @@ export function InsightsTab({ txList, currency }) {
   const [selectedMonth, setSelectedMonth] = useState(null);
   const activeMonth = selectedMonth || latestMonth;
 
-  const monthIdx    = availableMonths.indexOf(activeMonth);
-  const canGoBack   = monthIdx > 0;
-  const canGoFwd    = monthIdx < availableMonths.length - 1;
-  const goBack  = () => canGoBack  && setSelectedMonth(availableMonths[monthIdx - 1]);
-  const goFwd   = () => canGoFwd   && setSelectedMonth(availableMonths[monthIdx + 1]);
+  const monthIdx  = availableMonths.indexOf(activeMonth);
+  const canGoBack = monthIdx > 0;
+  const canGoFwd  = monthIdx < availableMonths.length - 1;
+  const goBack = () => canGoBack && setSelectedMonth(availableMonths[monthIdx - 1]);
+  const goFwd  = () => canGoFwd  && setSelectedMonth(availableMonths[monthIdx + 1]);
 
-  // ── Current month core figures ────────────────────────────────────────────
+  // ── selected category state ───────────────────────────────────────────────
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  // ── budgets from localStorage ─────────────────────────────────────────────
+  const [budgets, setBudgets] = useState([]);
+  useEffect(() => {
+    if (!userId) return;
+    try {
+      const raw = localStorage.getItem(`finacle_budgets_${userId}`);
+      if (raw) setBudgets(JSON.parse(raw));
+    } catch {}
+  }, [userId]);
+
+  const selectedCategoryBudget = useMemo(() =>
+    selectedCategory ? (budgets.find(b => b.category === selectedCategory)?.limit ?? null) : null
+  , [budgets, selectedCategory]);
+
+  // ── core monthly figures ──────────────────────────────────────────────────
   const { income, spending, saved, rate: savingsRate } = useMemo(
     () => monthStats(txList, activeMonth), [txList, activeMonth]
   );
   const rl = rateLabel(savingsRate);
 
-  // ── Category breakdown for active month ──────────────────────────────────
+  // ── category breakdown ────────────────────────────────────────────────────
   const categoryBreakdown = useMemo(() => {
     const totals = {};
     txList.filter(tx => tx.date.startsWith(activeMonth) && Number(tx.amount) < 0).forEach(tx => {
@@ -109,57 +124,68 @@ export function InsightsTab({ txList, currency }) {
       }));
   }, [txList, activeMonth, income, spending]);
 
-  // ── Category performance vs prev / 3-month avg ───────────────────────────
+  // ── category performance vs prev / 3-month avg ───────────────────────────
   const categoryPerf = useMemo(() => {
     const prev1 = offsetMonth(activeMonth, -1);
     const prev2 = offsetMonth(activeMonth, -2);
     const prev3 = offsetMonth(activeMonth, -3);
-
-    const spendByMonthCat = {}; // spendByMonthCat[month][cat] = amount
+    const spendByMonthCat = {};
     txList.filter(tx => Number(tx.amount) < 0).forEach(tx => {
-      const mk  = tx.date.slice(0,7);
-      const cat = tx.category;
-      const amt = Math.abs(Number(tx.amount));
+      const mk = tx.date.slice(0,7);
       if (!spendByMonthCat[mk]) spendByMonthCat[mk] = {};
-      spendByMonthCat[mk][cat] = (spendByMonthCat[mk][cat] || 0) + amt;
+      spendByMonthCat[mk][tx.category] = (spendByMonthCat[mk][tx.category] || 0) + Math.abs(Number(tx.amount));
     });
-
     return categoryBreakdown.map(({ cat, amount, pctOfIncome, pctOfSpending }) => {
       const prevAmt = spendByMonthCat[prev1]?.[cat] || 0;
-      const avg3 = ([prev1, prev2, prev3].reduce((s, mk) => s + (spendByMonthCat[mk]?.[cat] || 0), 0)) / 3;
-
-      const vsPrev = prevAmt > 0 ? ((amount - prevAmt) / prevAmt) * 100 : null;
-      const vsAvg  = avg3   > 0 ? ((amount - avg3)   / avg3)   * 100 : null;
-
-      return { cat, amount, pctOfIncome, pctOfSpending, prevAmt, avg3, vsPrev, vsAvg };
+      const avg3    = ([prev1, prev2, prev3].reduce((s, mk) => s + (spendByMonthCat[mk]?.[cat] || 0), 0)) / 3;
+      return {
+        cat, amount, pctOfIncome, pctOfSpending,
+        prevAmt, avg3,
+        vsPrev: prevAmt > 0 ? ((amount - prevAmt) / prevAmt) * 100 : null,
+        vsAvg:  avg3   > 0 ? ((amount - avg3)   / avg3)   * 100 : null,
+      };
     });
   }, [txList, activeMonth, categoryBreakdown]);
 
-  // ── 6-month trend window ─────────────────────────────────────────────────
-  const trendData = useMemo(() => {
-    return Array.from({ length: 6 }, (_, i) => {
+  // ── 6-month income/spending trend ─────────────────────────────────────────
+  const trendData = useMemo(() =>
+    Array.from({ length: 6 }, (_, i) => {
       const mk = offsetMonth(activeMonth, i - 5);
       const { income: inc, spending: spd, saved: sv, rate } = monthStats(txList, mk);
-      return {
-        month: labelShort(mk),
-        income: Math.round(inc),
-        spending: Math.round(spd),
-        saved: Math.round(sv),
-        rate: Math.round(rate * 10) / 10,
-        hasData: inc > 0 || spd > 0,
-      };
-    });
-  }, [txList, activeMonth]);
+      return { month: labelShort(mk), income: Math.round(inc), spending: Math.round(spd), saved: Math.round(sv), rate: Math.round(rate * 10) / 10 };
+    })
+  , [txList, activeMonth]);
 
-  // ── Overspending alerts ───────────────────────────────────────────────────
+  // ── selected category 6-month trend ──────────────────────────────────────
+  const categoryTrendData = useMemo(() => {
+    if (!selectedCategory) return [];
+    return Array.from({ length: 6 }, (_, i) => {
+      const mk = offsetMonth(activeMonth, i - 5);
+      const amount = txList
+        .filter(tx => tx.date.startsWith(mk) && tx.category === selectedCategory && Number(tx.amount) < 0)
+        .reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
+      return { month: labelShort(mk), amount: Math.round(amount * 100) / 100, isActive: mk === activeMonth };
+    });
+  }, [txList, activeMonth, selectedCategory]);
+
+  const catColor = selectedCategory ? (getCategoryConfig(selectedCategory).color || "#6366f1") : "#6366f1";
+
+  // ── alerts ────────────────────────────────────────────────────────────────
   const alerts = useMemo(() =>
-    categoryPerf
-      .filter(c => c.vsAvg !== null && c.vsAvg > 20 && c.amount > 200)
-      .sort((a,b) => b.vsAvg - a.vsAvg)
-      .slice(0, 3)
+    categoryPerf.filter(c => c.vsAvg !== null && c.vsAvg > 20 && c.amount > 200)
+      .sort((a,b) => b.vsAvg - a.vsAvg).slice(0, 3)
   , [categoryPerf]);
 
-  // ── Empty state ───────────────────────────────────────────────────────────
+  // ── interaction handler ───────────────────────────────────────────────────
+  const handleCategoryClick = (cat) => {
+    setSelectedCategory(prev => prev === cat ? null : cat);
+    if (onCategoryClick) {
+      const monthTx = txList.filter(tx => tx.category === cat && tx.date.startsWith(activeMonth));
+      onCategoryClick({ type: "category", title: `${cat} — ${labelLong(activeMonth)}`, transactions: monthTx });
+    }
+  };
+
+  // ── empty state ───────────────────────────────────────────────────────────
   if (!txList.length) {
     return (
       <div className="animate-slide-up space-y-5">
@@ -186,7 +212,6 @@ export function InsightsTab({ txList, currency }) {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Financial Insights</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">How you're allocating your income — month by month</p>
         </div>
-
         <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-2.5 shadow-sm shrink-0 self-start sm:self-auto">
           <button onClick={goBack} disabled={!canGoBack}
             className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 disabled:opacity-25 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -202,49 +227,13 @@ export function InsightsTab({ txList, currency }) {
         </div>
       </div>
 
-      {/* ── Summary cards ── */}
+      {/* ── Summary Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          {
-            label: "Income",
-            value: fmt(income),
-            sub: "Salary & other inflows",
-            valueClass: "text-emerald-600 dark:text-emerald-400",
-            border: "border-emerald-100 dark:border-emerald-500/20",
-            Icon: ArrowUpRight,
-            iconClass: "text-emerald-500",
-            iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
-          },
-          {
-            label: "Total Spent",
-            value: fmt(spending),
-            sub: income > 0 ? `${((spending/income)*100).toFixed(0)}% of income` : "No income recorded",
-            valueClass: "text-slate-900 dark:text-white",
-            border: "border-red-100 dark:border-red-500/20",
-            Icon: ArrowDownRight,
-            iconClass: "text-red-500",
-            iconBg: "bg-red-50 dark:bg-red-500/10",
-          },
-          {
-            label: "Saved",
-            value: fmt(Math.abs(saved)),
-            sub: saved >= 0 ? "Kept this month" : "Over-spent income",
-            valueClass: saved >= 0 ? "text-indigo-600 dark:text-indigo-400" : "text-red-500",
-            border: saved >= 0 ? "border-indigo-100 dark:border-indigo-500/20" : "border-red-100 dark:border-red-500/20",
-            Icon: saved >= 0 ? TrendingUp : TrendingDown,
-            iconClass: saved >= 0 ? "text-indigo-500" : "text-red-500",
-            iconBg: saved >= 0 ? "bg-indigo-50 dark:bg-indigo-500/10" : "bg-red-50 dark:bg-red-500/10",
-          },
-          {
-            label: "Savings Rate",
-            value: `${savingsRate.toFixed(1)}%`,
-            sub: rl.text,
-            valueClass: rl.cls,
-            border: "border-slate-100 dark:border-slate-800",
-            Icon: savingsRate >= 15 ? TrendingUp : savingsRate >= 5 ? Minus : TrendingDown,
-            iconClass: savingsRate >= 15 ? "text-emerald-500" : savingsRate >= 5 ? "text-amber-500" : "text-red-500",
-            iconBg: savingsRate >= 15 ? "bg-emerald-50 dark:bg-emerald-500/10" : savingsRate >= 5 ? "bg-amber-50 dark:bg-amber-500/10" : "bg-red-50 dark:bg-red-500/10",
-          },
+          { label: "Income",       value: fmt(income),          sub: "Salary & other inflows",    valueClass: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-100 dark:border-emerald-500/20", Icon: ArrowUpRight,   iconClass: "text-emerald-500", iconBg: "bg-emerald-50 dark:bg-emerald-500/10" },
+          { label: "Total Spent",  value: fmt(spending),        sub: income > 0 ? `${((spending/income)*100).toFixed(0)}% of income` : "No income", valueClass: "text-slate-900 dark:text-white", border: "border-red-100 dark:border-red-500/20", Icon: ArrowDownRight, iconClass: "text-red-500",     iconBg: "bg-red-50 dark:bg-red-500/10" },
+          { label: "Saved",        value: fmt(Math.abs(saved)), sub: saved >= 0 ? "Kept this month" : "Over-spent income",          valueClass: saved >= 0 ? "text-indigo-600 dark:text-indigo-400" : "text-red-500", border: saved >= 0 ? "border-indigo-100 dark:border-indigo-500/20" : "border-red-100 dark:border-red-500/20", Icon: saved >= 0 ? TrendingUp : TrendingDown, iconClass: saved >= 0 ? "text-indigo-500" : "text-red-500", iconBg: saved >= 0 ? "bg-indigo-50 dark:bg-indigo-500/10" : "bg-red-50 dark:bg-red-500/10" },
+          { label: "Savings Rate", value: `${savingsRate.toFixed(1)}%`, sub: rl.text, valueClass: rl.cls, border: "border-slate-100 dark:border-slate-800", Icon: savingsRate >= 15 ? TrendingUp : savingsRate >= 5 ? Minus : TrendingDown, iconClass: savingsRate >= 15 ? "text-emerald-500" : savingsRate >= 5 ? "text-amber-500" : "text-red-500", iconBg: savingsRate >= 15 ? "bg-emerald-50 dark:bg-emerald-500/10" : savingsRate >= 5 ? "bg-amber-50 dark:bg-amber-500/10" : "bg-red-50 dark:bg-red-500/10" },
         ].map(({ label, value, sub, valueClass, border, Icon, iconClass, iconBg }) => (
           <div key={label} className={`bg-white dark:bg-slate-900 border ${border} rounded-2xl p-4 shadow-sm`}>
             <div className="flex items-start justify-between mb-3">
@@ -265,9 +254,7 @@ export function InsightsTab({ txList, currency }) {
           <div className="flex items-start justify-between mb-4">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white">Income Allocation</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Every dirham of your {fmt(income)} — where it went
-              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Every dirham of your {fmt(income)} — where it went</p>
             </div>
             {savingsRate > 0 && (
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 ${rl.cls}`}>
@@ -275,17 +262,17 @@ export function InsightsTab({ txList, currency }) {
               </span>
             )}
           </div>
-
-          {/* Stacked bar */}
           <div className="h-9 w-full flex rounded-xl overflow-hidden gap-px mb-5">
             {categoryBreakdown.map(({ cat, pctOfIncome }) => {
               const { color } = getCategoryConfig(cat);
               return pctOfIncome > 0.5 ? (
-                <div key={cat} className="h-full transition-all duration-700 ease-out relative group"
+                <div
+                  key={cat}
+                  className="h-full transition-all duration-700 ease-out relative cursor-pointer hover:opacity-80"
                   style={{ width: `${pctOfIncome}%`, backgroundColor: color }}
                   title={`${cat}: ${pctOfIncome.toFixed(1)}%`}
+                  onClick={() => handleCategoryClick(cat)}
                 >
-                  {/* Label inside bar if wide enough */}
                   {pctOfIncome > 8 && (
                     <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white/90 select-none">
                       {pctOfIncome.toFixed(0)}%
@@ -296,28 +283,23 @@ export function InsightsTab({ txList, currency }) {
             })}
             {savingsRate > 0.5 && (
               <div className="h-full bg-emerald-500 transition-all duration-700 ease-out relative"
-                style={{ flex: `0 0 ${savingsRate}%` }}
-                title={`Saved: ${savingsRate.toFixed(1)}%`}
-              >
+                style={{ flex: `0 0 ${savingsRate}%` }} title={`Saved: ${savingsRate.toFixed(1)}%`}>
                 {savingsRate > 8 && (
-                  <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white/90 select-none">
-                    Saved
-                  </span>
+                  <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white/90 select-none">Saved</span>
                 )}
               </div>
             )}
           </div>
-
-          {/* Legend */}
           <div className="flex flex-wrap gap-x-4 gap-y-2">
             {categoryBreakdown.map(({ cat, pctOfIncome }) => {
               const { color } = getCategoryConfig(cat);
               return pctOfIncome > 0.5 ? (
-                <div key={cat} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+                <button key={cat} onClick={() => handleCategoryClick(cat)}
+                  className={`flex items-center gap-1.5 text-xs transition-opacity ${selectedCategory && selectedCategory !== cat ? "opacity-40" : ""}`}>
                   <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: color }} />
-                  <span>{cat}</span>
+                  <span className="text-slate-600 dark:text-slate-300">{cat}</span>
                   <span className="font-bold text-slate-900 dark:text-white">{pctOfIncome.toFixed(0)}%</span>
-                </div>
+                </button>
               ) : null;
             })}
             {savingsRate > 0.5 && (
@@ -331,14 +313,16 @@ export function InsightsTab({ txList, currency }) {
         </div>
       )}
 
-      {/* ── Category table + Trend chart ── */}
+      {/* ── Category table + Dynamic chart ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-        {/* Category Performance */}
+        {/* Category Performance Table */}
         <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-5 border-b border-slate-100 dark:border-slate-800">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">Category Performance</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">This month vs last month and 3-month average</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Click a row to see transactions and drill into its trend →
+            </p>
           </div>
 
           {/* Desktop header */}
@@ -351,14 +335,18 @@ export function InsightsTab({ txList, currency }) {
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {categoryPerf.length === 0 ? (
               <p className="p-5 text-sm text-slate-400">No spending data for this month.</p>
-            ) : categoryPerf.map(({ cat, amount, pctOfIncome, vsPrev, vsAvg }) => {
+            ) : categoryPerf.map(({ cat, amount, pctOfIncome, vsPrev }) => {
               const { Icon, iconBg, iconText, color } = getCategoryConfig(cat);
               const up   = vsPrev !== null && vsPrev >  5;
               const down = vsPrev !== null && vsPrev < -5;
-              const flat = vsPrev !== null && !up && !down;
+              const isSelected = selectedCategory === cat;
 
               return (
-                <div key={cat} className="px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                <div
+                  key={cat}
+                  onClick={() => handleCategoryClick(cat)}
+                  className={`px-5 py-3.5 cursor-pointer transition-colors group ${isSelected ? "bg-indigo-50 dark:bg-indigo-500/10" : "hover:bg-slate-50 dark:hover:bg-white/[0.02]"}`}
+                >
                   {/* Mobile */}
                   <div className="sm:hidden flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -368,7 +356,7 @@ export function InsightsTab({ txList, currency }) {
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{cat}</p>
                         <p className={`text-[11px] font-semibold ${up ? "text-red-500" : down ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
-                          {vsPrev !== null ? `${up?"+":""}${vsPrev.toFixed(0)}% vs last month` : "No prior data"}
+                          {vsPrev !== null ? `${up?"+":""}${vsPrev.toFixed(0)}% vs prev` : "No prior data"}
                         </p>
                       </div>
                     </div>
@@ -386,9 +374,9 @@ export function InsightsTab({ txList, currency }) {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{cat}</p>
-                        {/* mini % of income bar */}
                         <div className="h-1 max-w-[100px] bg-slate-100 dark:bg-slate-800 rounded-full mt-1 overflow-hidden">
-                          <div className="h-full rounded-full" style={{ width:`${Math.min(100,pctOfIncome)}%`, backgroundColor: color }} />
+                          <div className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, pctOfIncome)}%`, backgroundColor: color }} />
                         </div>
                       </div>
                     </div>
@@ -406,68 +394,141 @@ export function InsightsTab({ txList, currency }) {
           </div>
         </div>
 
-        {/* 6-month Trend */}
+        {/* Dynamic Right Chart */}
         <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col">
-          <div className="mb-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">Income vs Spending</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Last 6 months — gap = savings</p>
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                {selectedCategory ? selectedCategory : "Income vs Spending"}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {selectedCategory
+                  ? `6-month trend${selectedCategoryBudget ? " · budget line shown" : ""}`
+                  : "Last 6 months — gap = savings"}
+              </p>
+            </div>
+            {selectedCategory && (
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X size={13} /> Reset
+              </button>
+            )}
           </div>
 
           <div className="flex-1" style={{ minHeight: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={trendData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barGap={2}>
-                <defs>
-                  <linearGradient id="incGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10B981" stopOpacity={0.9} />
-                    <stop offset="100%" stopColor="#10B981" stopOpacity={0.5} />
-                  </linearGradient>
-                  <linearGradient id="spdGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#EF4444" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#EF4444" stopOpacity={0.4} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" vertical={false} />
-                <XAxis dataKey="month" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} />
-                <YAxis
-                  yAxisId="amt"
-                  stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} width={45}
-                  tickFormatter={v => currency === "AED" ? `${(v/1000).toFixed(0)}k` : `$${(v/1000).toFixed(0)}k`}
-                />
-                <YAxis
-                  yAxisId="rate"
-                  orientation="right"
-                  stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} width={32}
-                  tickFormatter={v => `${v}%`}
-                  domain={[0, 100]}
-                />
-                <Tooltip content={<SlimTooltip currency={currency} />} />
-                <Bar yAxisId="amt" dataKey="income"   name="Income"  fill="url(#incGrad)" radius={[4,4,0,0]} maxBarSize={22} />
-                <Bar yAxisId="amt" dataKey="spending" name="Spent"   fill="url(#spdGrad)" radius={[4,4,0,0]} maxBarSize={22} />
-                <Line
-                  yAxisId="rate" type="monotone" dataKey="rate" name="Savings %"
-                  stroke="#6366f1" strokeWidth={2} dot={{ r: 3, fill: "#6366f1", strokeWidth: 0 }}
-                  activeDot={{ r: 5, fill: "#6366f1", strokeWidth: 0 }}
-                />
-              </ComposedChart>
+              {selectedCategory ? (
+                /* ── Category 6-month trend ── */
+                <BarChart data={categoryTrendData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="catBarGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={catColor} stopOpacity={0.95} />
+                      <stop offset="100%" stopColor={catColor} stopOpacity={0.55} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" vertical={false} />
+                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} />
+                  <YAxis
+                    stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} width={48}
+                    tickFormatter={v => currency === "AED" ? `Đ${(v/1000).toFixed(0)}k` : `$${(v/1000).toFixed(0)}k`}
+                  />
+                  <Tooltip content={<SlimTooltip currency={currency} />} />
+                  <Bar dataKey="amount" name={selectedCategory} radius={[5, 5, 0, 0]} maxBarSize={36}>
+                    {categoryTrendData.map((entry, i) => (
+                      <Cell
+                        key={i}
+                        fill={entry.isActive ? catColor : `${catColor}70`}
+                      />
+                    ))}
+                  </Bar>
+                  {selectedCategoryBudget && (
+                    <ReferenceLine
+                      y={selectedCategoryBudget}
+                      stroke="#EF4444"
+                      strokeWidth={2}
+                      strokeDasharray="6 3"
+                      label={{
+                        value: `Budget: ${currency === "AED" ? "Đ" : "$"}${Number(selectedCategoryBudget).toLocaleString()}`,
+                        position: "insideTopRight",
+                        fill: "#EF4444",
+                        fontSize: 10,
+                        fontWeight: 600,
+                      }}
+                    />
+                  )}
+                </BarChart>
+              ) : (
+                /* ── Default: income vs spending ── */
+                <ComposedChart data={trendData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }} barGap={2}>
+                  <defs>
+                    <linearGradient id="incGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10B981" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#10B981" stopOpacity={0.5} />
+                    </linearGradient>
+                    <linearGradient id="spdGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#EF4444" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#EF4444" stopOpacity={0.4} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" vertical={false} />
+                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="amt" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} width={45}
+                    tickFormatter={v => currency === "AED" ? `${(v/1000).toFixed(0)}k` : `$${(v/1000).toFixed(0)}k`}
+                  />
+                  <YAxis yAxisId="rate" orientation="right" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} width={32}
+                    tickFormatter={v => `${v}%`} domain={[0, 100]}
+                  />
+                  <Tooltip content={<SlimTooltip currency={currency} />} />
+                  <Bar yAxisId="amt" dataKey="income"   name="Income"  fill="url(#incGrad)" radius={[4,4,0,0]} maxBarSize={22} />
+                  <Bar yAxisId="amt" dataKey="spending" name="Spent"   fill="url(#spdGrad)" radius={[4,4,0,0]} maxBarSize={22} />
+                  <Line yAxisId="rate" type="monotone" dataKey="rate" name="Savings %"
+                    stroke="#6366f1" strokeWidth={2} dot={{ r: 3, fill: "#6366f1", strokeWidth: 0 }}
+                    activeDot={{ r: 5, fill: "#6366f1", strokeWidth: 0 }}
+                  />
+                </ComposedChart>
+              )}
             </ResponsiveContainer>
           </div>
 
-          {/* Legend */}
+          {/* Chart footer */}
           <div className="flex items-center justify-center gap-5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-            {[
-              { color: "#10B981", label: "Income" },
-              { color: "#EF4444", label: "Spent"  },
-              { color: "#6366f1", label: "Savings rate", dash: true },
-            ].map(({ color, label, dash }) => (
-              <div key={label} className="flex items-center gap-1.5">
-                {dash ? (
-                  <svg width={16} height={8}><line x1={0} y1={4} x2={16} y2={4} stroke={color} strokeWidth={2} strokeDasharray="4 2" /></svg>
-                ) : (
-                  <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
+            {selectedCategory ? (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: catColor }} />
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">This month (bright)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm opacity-50" style={{ backgroundColor: catColor }} />
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Other months</span>
+                </div>
+                {selectedCategoryBudget && (
+                  <div className="flex items-center gap-1.5">
+                    <svg width={16} height={8}><line x1={0} y1={4} x2={16} y2={4} stroke="#EF4444" strokeWidth={2} strokeDasharray="5 3" /></svg>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">Budget limit</span>
+                  </div>
                 )}
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">{label}</span>
-              </div>
-            ))}
+              </>
+            ) : (
+              <>
+                {[
+                  { color: "#10B981", label: "Income" },
+                  { color: "#EF4444", label: "Spent" },
+                  { color: "#6366f1", label: "Savings rate", dash: true },
+                ].map(({ color, label, dash }) => (
+                  <div key={label} className="flex items-center gap-1.5">
+                    {dash ? (
+                      <svg width={16} height={8}><line x1={0} y1={4} x2={16} y2={4} stroke={color} strokeWidth={2} strokeDasharray="4 2" /></svg>
+                    ) : (
+                      <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
+                    )}
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">{label}</span>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -482,16 +543,19 @@ export function InsightsTab({ txList, currency }) {
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">Spending Alerts</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Categories running significantly above their 3-month average — consider cutting back
+                Above 3-month average — click to see transactions
               </p>
             </div>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {alerts.map(({ cat, amount, avg3, vsAvg }) => {
               const { Icon, iconBg, iconText } = getCategoryConfig(cat);
               return (
-                <div key={cat} className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-500/[0.06] border border-amber-100 dark:border-amber-500/20">
+                <div
+                  key={cat}
+                  onClick={() => handleCategoryClick(cat)}
+                  className="flex items-center gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-500/[0.06] border border-amber-100 dark:border-amber-500/20 cursor-pointer hover:border-amber-300 dark:hover:border-amber-500/40 hover:shadow-sm transition-all"
+                >
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
                     <Icon size={16} className={iconText} />
                   </div>
