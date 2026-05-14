@@ -25,7 +25,7 @@ const parseLocalDate = (dateStr) => {
 const fmtDate = (dateStr) => {
   if (!dateStr) return "";
   const d = parseLocalDate(dateStr);
-  return d.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
+  return `${d.getDate().toString().padStart(2, "0")} ${d.toLocaleString("en-US", { month: "short" })}`;
 };
 
 export function TransactionsTab({ txList, currency }) {
@@ -40,7 +40,7 @@ export function TransactionsTab({ txList, currency }) {
     const abs = Math.abs(amount).toLocaleString("en-US", {
       minimumFractionDigits: 2, maximumFractionDigits: 2,
     });
-    return currency === "AED" ? `AED ${abs}` : `$${abs}`;
+    return currency === "AED" ? `Đ ${abs}` : `$${abs}`;
   };
 
   const filtered = useMemo(() => {
@@ -317,7 +317,7 @@ export function TransactionsTab({ txList, currency }) {
                       {tx.description}
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[11px] text-slate-400 dark:text-slate-500">{fmtDate(tx.date)}</span>
+                      <span className="text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">{fmtDate(tx.date)}</span>
                       <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${pill}`}>
                         {tx.category}

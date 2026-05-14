@@ -278,8 +278,8 @@ export default function Home() {
       .map((tx) => parseLocalDate(tx.date).getTime())
       .filter((t) => !isNaN(t));
     if (!dates.length) return "";
-    const fmt = (d) => d.toLocaleString("en-US", { day: "numeric", month: "short", year: "numeric" });
-    return `${fmt(new Date(Math.min(...dates)))} - ${fmt(new Date(Math.max(...dates)))}`;
+    const fmt = (d) => d.toLocaleString("en-US", { month: "short", year: "2-digit" });
+    return `${fmt(new Date(Math.min(...dates)))} – ${fmt(new Date(Math.max(...dates)))}`;
   };
 
   if (isLoading) {
