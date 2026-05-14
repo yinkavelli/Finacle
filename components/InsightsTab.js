@@ -89,7 +89,7 @@ export function InsightsTab({ txList, currency }) {
   const goFwd   = () => canGoFwd   && setSelectedMonth(availableMonths[monthIdx + 1]);
 
   // ── Current month core figures ────────────────────────────────────────────
-  const { income, spending, saved, savingsRate } = useMemo(
+  const { income, spending, saved, rate: savingsRate } = useMemo(
     () => monthStats(txList, activeMonth), [txList, activeMonth]
   );
   const rl = rateLabel(savingsRate);
