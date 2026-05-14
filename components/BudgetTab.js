@@ -351,7 +351,7 @@ export function BudgetTab({ txList, currency, userId }) {
       {/* ── Create / Edit Modal ── */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 p-6 animate-zoom-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 p-6 animate-zoom-in overflow-y-auto scroll-thin max-h-[90vh]">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                 {editTarget ? "Edit Budget" : "Create Budget"}

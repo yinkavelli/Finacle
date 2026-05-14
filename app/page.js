@@ -5,6 +5,7 @@ import { ChatWidget } from "@/components/ChatWidget";
 import { TransactionsTab } from "@/components/TransactionsTab";
 import { BudgetTab } from "@/components/BudgetTab";
 import { InsightsTab } from "@/components/InsightsTab";
+import { getCategoryConfig } from "@/utils/categoryConfig";
 import {
   LayoutDashboard,
   Receipt,
@@ -868,30 +869,65 @@ function InsightModal({ insight, onClose, currency }) {
           </div>
         )}
 
-        <div className="overflow-y-auto p-4 md:p-5 flex-1">
+        <div className="overflow-y-auto scroll-thin p-4 md:p-5 flex-1">
           {txs.length === 0 ? (
             <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm animate-fade-in">
               No transactions found.
             </div>
           ) : (
-            <div key={currentView.title + drillStack.length} className="space-y-3 animate-slide-up">
+            <div key={currentView.title + drillStack.length} className="space-y-2.5 animate-slide-up">
               {currentView.mode === "category" || currentView.mode === "month" ? (
                 groupedItems.map((item, idx) => {
                   const pct = totalAmount > 0 ? ((item.amount / totalAmount) * 100).toFixed(1) : 0;
+                  const catCfg = currentView.mode === "category" ? getCategoryConfig(item.name) : null;
+                  const accentColor = catCfg?.color || "#6366f1";
+                  const { Icon: CatIcon, iconBg, iconText, pill } = catCfg || {};
                   return (
-                    <div key={idx} onClick={() => handleGroupClick(item)} className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-semibold text-slate-900 dark:text-white text-sm">{item.name}</span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{item.transactions.length} transaction{item.transactions.length !== 1 ? "s" : ""}</span>
+                    <div
+                      key={idx}
+                      onClick={() => handleGroupClick(item)}
+                      className="group relative flex items-center gap-3 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md transition-all overflow-hidden"
+                      style={{
+                        background: `linear-gradient(135deg, color-mix(in srgb, ${accentColor} 6%, white) 0%, white 60%)`,
+                      }}
+                    >
+                      {/* dark mode card bg overlay */}
+                      <div className="absolute inset-0 hidden dark:block rounded-xl" style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${accentColor} 10%, #1e293b) 0%, #1e293b 60%)` }} />
+                      {/* Left accent bar */}
+                      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: accentColor }} />
+
+                      {/* Icon */}
+                      {CatIcon && (
+                        <div className={`relative z-10 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
+                          <CatIcon size={16} className={iconText} />
+                        </div>
+                      )}
+
+                      {/* Label */}
+                      <div className="relative z-10 flex-1 min-w-0">
+                        <span className="font-semibold text-slate-900 dark:text-white text-sm block">{item.name}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {item.transactions.length} transaction{item.transactions.length !== 1 ? "s" : ""}
+                        </span>
                       </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className={`text-sm font-bold ${currentView.isIncome === true ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>
+
+                      {/* Amount + pct */}
+                      <div className="relative z-10 flex flex-col items-end gap-1 shrink-0">
+                        <span className={`text-sm font-bold tabular-nums ${currentView.isIncome === true ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>
                           {formatCurrencyLocal(item.amount)}
                         </span>
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                          {pct}% of Total
+                        <span
+                          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={{ backgroundColor: `${accentColor}18`, color: accentColor }}
+                        >
+                          {pct}%
                         </span>
                       </div>
+
+                      {/* Chevron hint */}
+                      <svg className="relative z-10 w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   );
                 })
@@ -899,22 +935,42 @@ function InsightModal({ insight, onClose, currency }) {
                 txs.map((tx) => {
                   const amt = Math.abs(Number(tx.amount));
                   const pct = totalAmount > 0 ? ((amt / totalAmount) * 100).toFixed(1) : 0;
+                  const isIncome = Number(tx.amount) > 0;
+                  const { Icon: TxIcon, iconBg, iconText, pill, color: txColor } = getCategoryConfig(tx.category);
                   return (
-                    <div key={tx.id} className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-semibold text-slate-900 dark:text-white text-sm">{tx.description}</span>
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
-                          <span>{formatDateLocal(tx.date)}</span>
-                          <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
-                          <span className="px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">{tx.category}</span>
+                    <div
+                      key={tx.id}
+                      className="relative flex items-center gap-3 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden"
+                      style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${txColor} 4%, white) 0%, white 50%)` }}
+                    >
+                      <div className="absolute inset-0 hidden dark:block rounded-xl" style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${txColor} 8%, #1e293b) 0%, #1e293b 55%)` }} />
+                      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: txColor }} />
+
+                      {/* Icon */}
+                      <div className={`relative z-10 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
+                        <TxIcon size={15} className={iconText} />
+                      </div>
+
+                      <div className="relative z-10 flex-1 min-w-0">
+                        <span className="font-semibold text-slate-900 dark:text-white text-sm block truncate">{tx.description}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[11px] text-slate-400 dark:text-slate-500">{formatDateLocal(tx.date)}</span>
+                          <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${pill}`}>
+                            {tx.category}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className={`text-sm font-bold ${Number(tx.amount) > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>
+
+                      <div className="relative z-10 flex flex-col items-end gap-1 shrink-0">
+                        <span className={`text-sm font-bold tabular-nums ${isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>
                           {formatCurrencyLocal(tx.amount)}
                         </span>
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                          {pct}% of Total
+                        <span
+                          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={{ backgroundColor: `${txColor}18`, color: txColor }}
+                        >
+                          {pct}%
                         </span>
                       </div>
                     </div>
