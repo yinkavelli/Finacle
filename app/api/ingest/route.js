@@ -32,60 +32,88 @@ export async function POST(request) {
 
       let transactions = [];
       const uniqueDescriptions = new Set();
+      let skipGPT = false;
 
-      parsedCsv.data.forEach(row => {
-        if (row.length >= 3) {
-          const dateStr = row[0];
-          const details = row[1] ? row[1].trim() : "";
-          const amountStr = row[2] ? row[2].toString() : "0";
+      // Detect format: our own export (header row: Date, Description, Category, Amount, Status)
+      // vs bank statement (DD/MM/YYYY, raw description, amount, balance)
+      const firstRow = parsedCsv.data[0] || [];
+      const isExportFormat =
+        firstRow[0]?.toString().toLowerCase().trim() === "date" &&
+        firstRow[1]?.toString().toLowerCase().trim() === "description";
 
-          let dateParts = dateStr.split('/');
-          let isoDate = dateStr;
-          if (dateParts.length === 3) {
-            isoDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-          } else if (!isNaN(Date.parse(dateStr))) {
-            isoDate = new Date(dateStr).toISOString().split('T')[0];
+      if (isExportFormat) {
+        // ── Finacle export format ──────────────────────────────────────────
+        // Columns: Date (YYYY-MM-DD), Description, Category, Amount, Status
+        skipGPT = true; // categories already assigned
+        parsedCsv.data.slice(1).forEach(row => {
+          if (row.length >= 4) {
+            const isoDate    = row[0]?.trim();
+            const description = (row[1]?.replace(/^"|"$/g, '') || "Unknown Transaction").substring(0, 60);
+            const category   = row[2]?.trim() || "General";
+            const amount     = parseFloat((row[3] || "0").toString().replace(/,/g, ''));
+
+            if (!isNaN(amount) && isoDate && isoDate.includes('-')) {
+              transactions.push({ date: isoDate, description, category, amount, original_details: row.join(', ') });
+            }
           }
+        });
+      } else {
+        // ── Bank statement format ──────────────────────────────────────────
+        // Columns: DD/MM/YYYY, raw description, amount, balance
+        parsedCsv.data.forEach(row => {
+          if (row.length >= 3) {
+            const dateStr  = row[0];
+            const details  = row[1] ? row[1].trim() : "";
+            const amountStr = row[2] ? row[2].toString() : "0";
 
-          const amount = parseFloat(amountStr.replace(/,/g, ''));
+            let dateParts = dateStr.split('/');
+            let isoDate = dateStr;
+            if (dateParts.length === 3) {
+              isoDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+            } else if (!isNaN(Date.parse(dateStr))) {
+              isoDate = new Date(dateStr).toISOString().split('T')[0];
+            }
 
-          if (!isNaN(amount) && isoDate.includes('-')) {
-            let cleanDesc = details
-              .replace(/CARD TRANSACTION|TRANSFER|PURCH|V DEBIT|ATM|UAESWCH|OW IPP RTP|PYMT/gi, '')
-              .replace(/\d{2}[A-Za-z]{3}\d{2}/g, '')
-              .replace(/Card Endi[a-z\s]*\d*/ig, '')
-              .replace(/\d{6}[A-Z]{3}/g, '')
-              .replace(/\b\d+\.\d{2}\b/g, '')
-              .replace(/[A-Z0-9]{9,}/g, '')
-              .replace(/NFC\s*\(AP-PAY\)/ig, '')
-              .replace(/\s{2,}/g, ' ')
-              .trim();
+            const amount = parseFloat(amountStr.replace(/,/g, ''));
 
-            if (!cleanDesc) cleanDesc = "Unknown Transaction";
-            cleanDesc = cleanDesc.substring(0, 60);
+            if (!isNaN(amount) && isoDate.includes('-')) {
+              let cleanDesc = details
+                .replace(/CARD TRANSACTION|TRANSFER|PURCH|V DEBIT|ATM|UAESWCH|OW IPP RTP|PYMT/gi, '')
+                .replace(/\d{2}[A-Za-z]{3}\d{2}/g, '')
+                .replace(/Card Endi[a-z\s]*\d*/ig, '')
+                .replace(/\d{6}[A-Z]{3}/g, '')
+                .replace(/\b\d+\.\d{2}\b/g, '')
+                .replace(/[A-Z0-9]{9,}/g, '')
+                .replace(/NFC\s*\(AP-PAY\)/ig, '')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
 
-            transactions.push({
-              date: isoDate,
-              description: cleanDesc,
-              category: "General",
-              amount: amount,
-              original_details: row.join(', ')
-            });
-            uniqueDescriptions.add(cleanDesc);
+              if (!cleanDesc) cleanDesc = "Unknown Transaction";
+              cleanDesc = cleanDesc.substring(0, 60);
+
+              transactions.push({
+                date: isoDate,
+                description: cleanDesc,
+                category: "General",
+                amount: amount,
+                original_details: row.join(', ')
+              });
+              uniqueDescriptions.add(cleanDesc);
+            }
           }
-        }
-      });
+        });
+      }
 
       if (transactions.length === 0) {
         return NextResponse.json(
-          { error: "No valid transactions found in this file. Check that it uses the expected format: DD/MM/YYYY, description, amount, balance." },
+          { error: "No valid transactions found. Supported formats: bank statement (DD/MM/YYYY, description, amount, balance) or a Finacle CSV export." },
           { status: 400 }
         );
       }
 
-      // Batch-categorise unique descriptions via GPT-4o
+      // Batch-categorise unique descriptions via GPT-4o (skip for Finacle exports)
       const descList = Array.from(uniqueDescriptions);
-      if (descList.length > 0) {
+      if (!skipGPT && descList.length > 0) {
         const prompt = `
           You are a precise financial categorization engine.
           Categorize these transaction descriptions into one of these short categories:
