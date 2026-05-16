@@ -76,17 +76,11 @@ export async function POST(request) {
         }
       });
 
-      // Deduplicate against existing rows for this user
-      const { data: existingRows } = await supabase
-        .from('transactions')
-        .select('original_details')
-        .eq('user_id', user.id);
-
-      const existingOriginals = new Set((existingRows || []).map(r => r.original_details));
-      transactions = transactions.filter(t => !existingOriginals.has(t.original_details));
-
       if (transactions.length === 0) {
-        return NextResponse.json({ success: true, transactions: [], message: "No new transactions found — all rows already exist." });
+        return NextResponse.json(
+          { error: "No valid transactions found in this file. Check that it uses the expected format: DD/MM/YYYY, description, amount, balance." },
+          { status: 400 }
+        );
       }
 
       // Batch-categorise unique descriptions via GPT-4o

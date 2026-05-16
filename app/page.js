@@ -158,12 +158,8 @@ export default function Home() {
       const res = await fetch("/api/ingest", { method: "POST", body: formData });
       const data = await res.json();
       if (data.success) {
-        if (data.transactions.length > 0) {
-          setUploadProgress("Updating Dashboard...");
-          setTxList((prev) => [...data.transactions, ...prev]);
-        } else {
-          alert(data.message || "No new transactions found — this file may have already been uploaded.");
-        }
+        setUploadProgress("Updating Dashboard...");
+        setTxList((prev) => [...data.transactions, ...prev]);
       } else {
         alert("Error parsing document: " + data.error);
       }
@@ -189,12 +185,8 @@ export default function Home() {
       const ingestRes = await fetch("/api/ingest", { method: "POST", body: formData });
       const data = await ingestRes.json();
       if (data.success) {
-        if (data.transactions.length > 0) {
-          setUploadProgress("Updating Dashboard...");
-          setTxList((prev) => [...data.transactions, ...prev]);
-        } else {
-          alert("Demo data already loaded. Clear your data first, then try again.");
-        }
+        setUploadProgress("Updating Dashboard...");
+        setTxList((prev) => [...data.transactions, ...prev]);
       } else {
         alert("Error loading demo: " + data.error);
       }
@@ -209,8 +201,15 @@ export default function Home() {
   const handleDeleteAll = async () => {
     setDeleteConfirmOpen(false);
     setIsLoading(true);
-    await supabase.from("transactions").delete().eq("user_id", user.id);
-    setTxList([]);
+    const { error: deleteError } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("user_id", user.id);
+    if (deleteError) {
+      alert("Failed to clear data. Please try again.");
+    } else {
+      setTxList([]);
+    }
     setIsLoading(false);
   };
 
