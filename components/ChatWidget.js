@@ -156,7 +156,7 @@ export function ChatWidget({ txList = [], currency = "AED" }) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         style={{ transform: `translate3d(${pos.x}px, ${pos.y}px, 0)` }}
-        className={`fixed bottom-20 sm:bottom-6 right-4 sm:right-6 p-4 rounded-2xl border border-indigo-500/50 bg-gradient-to-br from-indigo-600 to-indigo-900 text-white shadow-[0_4px_24px_rgba(99,102,241,0.5)] hover:scale-105 hover:shadow-[0_4px_32px_rgba(99,102,241,0.7)] transition-[transform,opacity,scale] z-50 overflow-hidden group touch-none ${isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"} ${isDragging ? "cursor-grabbing transition-none" : "cursor-grab"}`}
+        className={`fixed bottom-24 sm:bottom-8 right-4 sm:right-6 p-4 rounded-2xl border border-indigo-500/50 bg-gradient-to-br from-indigo-600 to-indigo-900 text-white shadow-[0_4px_24px_rgba(99,102,241,0.5)] hover:scale-105 hover:shadow-[0_4px_32px_rgba(99,102,241,0.7)] transition-[transform,opacity,scale] z-50 overflow-hidden group touch-none ${isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"} ${isDragging ? "cursor-grabbing transition-none" : "cursor-grab"}`}
         aria-label="Open AI Advisor Chat"
       >
         <div className="shimmer-overlay shimmer-overlay-indigo pointer-events-none"></div>
@@ -165,12 +165,12 @@ export function ChatWidget({ txList = [], currency = "AED" }) {
 
       {/* Chat window */}
       <div
-        className={`fixed bottom-20 sm:bottom-6 right-4 left-4 sm:left-auto sm:right-6 sm:w-80 md:w-96 max-h-[600px] h-[75dvh] border border-indigo-500/20 dark:border-indigo-500/50 bg-white/95 dark:bg-gradient-to-br dark:from-slate-900/95 dark:to-slate-950/95 backdrop-blur-xl shadow-[0_4px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_40px_rgba(0,0,0,0.5)] rounded-2xl flex flex-col z-50 transition-all duration-300 transform sm:origin-bottom-right overflow-hidden ${isOpen ? "translate-y-0 opacity-100 scale-100" : "translate-y-10 sm:translate-y-0 sm:scale-50 opacity-0 pointer-events-none"}`}
+        className={`fixed bottom-24 sm:bottom-8 right-4 left-4 sm:left-auto sm:right-6 sm:w-80 md:w-96 max-h-[600px] h-[75dvh] border border-indigo-500/20 dark:border-indigo-500/50 bg-white/95 dark:bg-[#0D1525]/97 backdrop-blur-xl shadow-[0_4px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_40px_rgba(0,0,0,0.5)] rounded-2xl flex flex-col z-50 transition-all duration-300 transform sm:origin-bottom-right overflow-hidden ${isOpen ? "translate-y-0 opacity-100 scale-100" : "translate-y-10 sm:translate-y-0 sm:scale-50 opacity-0 pointer-events-none"}`}
       >
         <div className="shimmer-overlay shimmer-overlay-indigo opacity-10 dark:opacity-20 pointer-events-none"></div>
 
         {/* Header */}
-        <div className="relative z-10 flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-white/5">
+        <div className="relative z-10 flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/[0.07] bg-slate-50/50 dark:bg-white/5">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
               <Bot size={20} />
@@ -186,7 +186,7 @@ export function ChatWidget({ txList = [], currency = "AED" }) {
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors text-slate-500 dark:text-slate-400"
+            className="p-1 hover:bg-slate-100 dark:hover:bg-white/[0.04] rounded-md transition-colors text-slate-500 dark:text-slate-400"
           >
             <X size={20} />
           </button>
@@ -204,7 +204,7 @@ export function ChatWidget({ txList = [], currency = "AED" }) {
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${msg.role === "user" ? "bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-lg" : "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"}`}>
                     {msg.role === "user" ? <User size={16} /> : <Bot size={16} />}
                   </div>
-                  <div className={`p-3 text-sm ${msg.role === "user" ? "bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-2xl rounded-tr-sm shadow-lg" : "bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm border border-slate-100 dark:border-slate-700"}`}>
+                  <div className={`p-3 text-sm ${msg.role === "user" ? "bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-2xl rounded-tr-sm shadow-lg" : "bg-slate-50 dark:bg-[#161E30]/90 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm border border-slate-100 dark:border-white/[0.08]"}`}>
                     {/* Typing dots while waiting for first chunk */}
                     {isCurrentlyStreaming && isEmpty ? (
                       <div className="flex items-center gap-1 py-0.5">

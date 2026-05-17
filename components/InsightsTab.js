@@ -194,7 +194,7 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
   if (!txList.length) {
     return (
       <div className="animate-slide-up space-y-5">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-14 flex flex-col items-center gap-4 text-center">
+        <div className="bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl p-14 flex flex-col items-center gap-4 text-center">
           <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
             <TrendingUp size={28} className="text-indigo-500 dark:text-indigo-400" />
           </div>
@@ -213,16 +213,16 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
       {/* ── Month Picker ── */}
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] md:text-sm text-slate-500 dark:text-slate-400">Monthly income allocation & spending analysis</p>
-        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2 md:px-4 py-2 shadow-sm shrink-0">
+        <div className="flex items-center gap-1 bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-xl px-2 md:px-4 py-2 shadow-sm shrink-0">
           <button onClick={goBack} disabled={!canGoBack}
-            className="p-1 md:p-1.5 rounded-lg text-slate-500 dark:text-slate-400 disabled:opacity-25 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            className="p-1 md:p-1.5 rounded-lg text-slate-500 dark:text-slate-400 disabled:opacity-25 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors">
             <ChevronLeft size={14} />
           </button>
           <span className="text-[11px] md:text-sm font-bold text-slate-900 dark:text-white min-w-[90px] md:min-w-[130px] text-center select-none px-1">
             {labelLong(activeMonth)}
           </span>
           <button onClick={goFwd} disabled={!canGoFwd}
-            className="p-1 md:p-1.5 rounded-lg text-slate-500 dark:text-slate-400 disabled:opacity-25 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            className="p-1 md:p-1.5 rounded-lg text-slate-500 dark:text-slate-400 disabled:opacity-25 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors">
             <ChevronRight size={14} />
           </button>
         </div>
@@ -234,9 +234,9 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
           { label: "Income",       value: fmt(income),          sub: "Inflows this month", valueClass: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-100 dark:border-emerald-500/20", Icon: ArrowUpRight,   iconClass: "text-emerald-500", iconBg: "bg-emerald-50 dark:bg-emerald-500/10" },
           { label: "Total Spent",  value: fmt(spending),        sub: income > 0 ? `${((spending/income)*100).toFixed(0)}% of income` : "No income", valueClass: "text-slate-900 dark:text-white", border: "border-red-100 dark:border-red-500/20", Icon: ArrowDownRight, iconClass: "text-red-500", iconBg: "bg-red-50 dark:bg-red-500/10" },
           { label: "Saved",        value: fmt(Math.abs(saved)), sub: saved >= 0 ? "Kept" : "Over-spent", valueClass: saved >= 0 ? "text-indigo-600 dark:text-indigo-400" : "text-red-500", border: saved >= 0 ? "border-indigo-100 dark:border-indigo-500/20" : "border-red-100 dark:border-red-500/20", Icon: saved >= 0 ? TrendingUp : TrendingDown, iconClass: saved >= 0 ? "text-indigo-500" : "text-red-500", iconBg: saved >= 0 ? "bg-indigo-50 dark:bg-indigo-500/10" : "bg-red-50 dark:bg-red-500/10" },
-          { label: "Savings Rate", value: `${savingsRate.toFixed(1)}%`, sub: rl.text, valueClass: rl.cls, border: "border-slate-100 dark:border-slate-800", Icon: savingsRate >= 15 ? TrendingUp : savingsRate >= 5 ? Minus : TrendingDown, iconClass: savingsRate >= 15 ? "text-emerald-500" : savingsRate >= 5 ? "text-amber-500" : "text-red-500", iconBg: savingsRate >= 15 ? "bg-emerald-50 dark:bg-emerald-500/10" : savingsRate >= 5 ? "bg-amber-50 dark:bg-amber-500/10" : "bg-red-50 dark:bg-red-500/10" },
+          { label: "Savings Rate", value: `${savingsRate.toFixed(1)}%`, sub: rl.text, valueClass: rl.cls, border: "border-slate-100 dark:border-white/[0.07]", Icon: savingsRate >= 15 ? TrendingUp : savingsRate >= 5 ? Minus : TrendingDown, iconClass: savingsRate >= 15 ? "text-emerald-500" : savingsRate >= 5 ? "text-amber-500" : "text-red-500", iconBg: savingsRate >= 15 ? "bg-emerald-50 dark:bg-emerald-500/10" : savingsRate >= 5 ? "bg-amber-50 dark:bg-amber-500/10" : "bg-red-50 dark:bg-red-500/10" },
         ].map(({ label, value, sub, valueClass, border, Icon, iconClass, iconBg }) => (
-          <div key={label} className={`bg-white dark:bg-slate-900 border ${border} rounded-2xl p-3 md:p-4 shadow-sm`}>
+          <div key={label} className={`bg-white dark:bg-[#0F1629] border ${border} rounded-2xl p-3 md:p-4 shadow-sm`}>
             <div className="flex items-start justify-between mb-2">
               <p className="text-[9px] md:text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-tight">{label}</p>
               <div className={`w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center shrink-0 ${iconBg}`}>
@@ -251,7 +251,7 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
 
       {/* ── Income Allocation Bar ── */}
       {income > 0 && categoryBreakdown.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-5 shadow-sm">
+        <div className="bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl p-4 md:p-5 shadow-sm">
           <div className="flex items-start justify-between mb-3">
             <div>
               <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-white">Income Allocation</h3>
@@ -329,13 +329,13 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5">
 
         {/* Category Performance Table */}
-        <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800">
+        <div className="lg:col-span-7 bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-4 md:p-5 border-b border-slate-100 dark:border-white/[0.07]">
             <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-white">Category Performance</h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Tap a row to see transactions</p>
           </div>
 
-          <div className="hidden sm:grid grid-cols-[1fr_100px_70px_55px] gap-2 px-4 md:px-5 py-2.5 bg-slate-50 dark:bg-slate-800/50">
+          <div className="hidden sm:grid grid-cols-[1fr_100px_70px_55px] gap-2 px-4 md:px-5 py-2.5 bg-slate-50 dark:bg-white/[0.03]">
             {["Category","This Month","vs Prev","% Inc"].map((h,i) => (
               <span key={h} className={`text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 ${i>0?"text-right":""}`}>{h}</span>
             ))}
@@ -377,7 +377,7 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{cat}</p>
-                        <div className="h-1 max-w-[90px] bg-slate-100 dark:bg-slate-800 rounded-full mt-1 overflow-hidden">
+                        <div className="h-1 max-w-[90px] bg-slate-100 dark:bg-[#161E30] rounded-full mt-1 overflow-hidden">
                           <div className="h-full rounded-full" style={{ width:`${Math.min(100,pctOfIncome)}%`, backgroundColor:color }} />
                         </div>
                       </div>
@@ -397,7 +397,7 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
         </div>
 
         {/* Dynamic Chart Panel */}
-        <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col">
+        <div className="lg:col-span-5 bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl p-4 md:p-5 shadow-sm flex flex-col">
           <div className="flex items-start justify-between mb-2.5">
             <div>
               <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-white leading-tight">
@@ -411,7 +411,7 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
             </div>
             {selectedCategory && (
               <button onClick={() => setSelectedCategory(null)}
-                className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0">
+                className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.04] shrink-0">
                 <X size={12} /> Reset
               </button>
             )}
@@ -423,7 +423,7 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
             <div className="relative rounded-xl overflow-hidden"
               style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 8px rgba(0,0,0,0.12)" }}>
               {/* Dark mode inner surface */}
-              <div className="absolute inset-0 bg-slate-100/70 dark:bg-slate-800/70 rounded-xl" />
+              <div className="absolute inset-0 bg-slate-100/70 dark:bg-[#161E30]/70 rounded-xl" />
               {/* Left fade */}
               <div className="absolute left-0 top-0 bottom-0 w-5 pointer-events-none z-10 rounded-l-xl"
                 style={{ background: "linear-gradient(to right, rgba(241,245,249,0.95), transparent)" }} />
@@ -526,7 +526,7 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
           </div>
 
           {/* Chart legend */}
-          <div className="flex items-center justify-center flex-wrap gap-3 md:gap-5 mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-center flex-wrap gap-3 md:gap-5 mt-2.5 pt-2.5 border-t border-slate-100 dark:border-white/[0.07]">
             {selectedCategory ? (
               <>
                 <div className="flex items-center gap-1.5">
@@ -564,7 +564,7 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
 
       {/* ── Overspending Alerts ── */}
       {alerts.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 md:p-5 shadow-sm">
+        <div className="bg-white dark:bg-[#0F1629] border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4 md:p-5 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center shrink-0">
               <AlertTriangle size={15} className="text-amber-500" />

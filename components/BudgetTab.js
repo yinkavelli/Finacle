@@ -179,7 +179,7 @@ export function BudgetTab({ txList, currency, userId }) {
 
         {/* Quick stats */}
         <div className="md:col-span-4 grid grid-rows-2 gap-5">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl p-5 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Most Spent Category</p>
               <p className="text-base font-bold text-slate-900 dark:text-white">
@@ -196,7 +196,7 @@ export function BudgetTab({ txList, currency, userId }) {
             })()}
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+          <div className="bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl p-5 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Monthly Progress</p>
               <p className="text-base font-bold text-slate-900 dark:text-white">
@@ -234,7 +234,7 @@ export function BudgetTab({ txList, currency, userId }) {
               return (
                 <div
                   key={budget.id}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col gap-5"
+                  className="bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl p-5 shadow-sm flex flex-col gap-5"
                 >
                   {/* Card header */}
                   <div className="flex items-start justify-between">
@@ -250,7 +250,7 @@ export function BudgetTab({ txList, currency, userId }) {
                     <div className="flex items-center gap-0.5">
                       <button
                         onClick={() => openEdit(budget)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
                       >
                         <Pencil size={13} />
                       </button>
@@ -278,7 +278,7 @@ export function BudgetTab({ txList, currency, userId }) {
                       </span>
                     </div>
 
-                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-slate-100 dark:bg-[#161E30] rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-700 ease-out"
                         style={{ width: `${pct}%`, backgroundColor: barClr }}
@@ -315,7 +315,7 @@ export function BudgetTab({ txList, currency, userId }) {
             {/* Add card */}
             <button
               onClick={openCreate}
-              className="bg-slate-50 dark:bg-slate-800/40 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-500 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-all min-h-[160px] group"
+              className="bg-slate-50 dark:bg-white/[0.03] border-2 border-dashed border-slate-200 dark:border-white/[0.08] rounded-2xl p-5 flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-500 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-all min-h-[160px] group"
             >
               <div className="w-10 h-10 rounded-full border-2 border-current flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Plus size={20} />
@@ -325,7 +325,7 @@ export function BudgetTab({ txList, currency, userId }) {
           </div>
         </>
       ) : (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 flex flex-col items-center justify-center gap-4 text-center">
+        <div className="bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl p-12 flex flex-col items-center justify-center gap-4 text-center">
           <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
             <PiggyBank size={28} className="text-indigo-500 dark:text-indigo-400" />
           </div>
@@ -348,14 +348,14 @@ export function BudgetTab({ txList, currency, userId }) {
       {/* ── Create / Edit Modal ── */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 p-6 animate-zoom-in overflow-y-auto scroll-thin max-h-[90vh]">
+          <div className="bg-white dark:bg-[#0F1629] w-full max-w-sm rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-white/[0.07] p-6 animate-zoom-in overflow-y-auto scroll-thin max-h-[90vh]">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                 {editTarget ? "Edit Budget" : "Create Budget"}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04] rounded-lg transition-colors"
               >
                 <X size={18} />
               </button>
@@ -375,7 +375,7 @@ export function BudgetTab({ txList, currency, userId }) {
                       name: f.name || e.target.value,
                     }))
                   }
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-white/20 transition-all"
+                  className="w-full bg-slate-50 dark:bg-[#161E30] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-white/20 transition-all"
                 >
                   {BUDGET_CATEGORIES.map((c) => (
                     <option key={c.name} value={c.name}>{c.name}</option>
@@ -392,7 +392,7 @@ export function BudgetTab({ txList, currency, userId }) {
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder={form.category}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-white/20 transition-all"
+                  className="w-full bg-slate-50 dark:bg-[#161E30] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-white/20 transition-all"
                 />
               </div>
 
@@ -407,7 +407,7 @@ export function BudgetTab({ txList, currency, userId }) {
                   placeholder="0.00"
                   min="1"
                   step="any"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-white/20 transition-all"
+                  className="w-full bg-slate-50 dark:bg-[#161E30] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-white/20 transition-all"
                 />
               </div>
             </div>
@@ -415,7 +415,7 @@ export function BudgetTab({ txList, currency, userId }) {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
               >
                 Cancel
               </button>

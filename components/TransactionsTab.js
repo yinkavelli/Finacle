@@ -108,7 +108,7 @@ export function TransactionsTab({ txList, currency }) {
       <div className="flex justify-end">
         <button
           onClick={exportCSV}
-          className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold transition-colors shadow-sm shrink-0"
+          className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-white/[0.08] rounded-xl bg-white dark:bg-[#161E30] hover:bg-slate-50 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-sm font-semibold transition-colors shadow-sm shrink-0"
         >
           <Download size={15} />
           Export CSV
@@ -116,7 +116,7 @@ export function TransactionsTab({ txList, currency }) {
       </div>
 
       {/* ── Filter bar ── */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm">
+      <div className="bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="relative flex-1 min-w-[160px]">
@@ -126,7 +126,7 @@ export function TransactionsTab({ txList, currency }) {
               value={search}
               onChange={(e) => { setSearch(e.target.value); resetPage(); }}
               placeholder="Search transactions…"
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-white/20 transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-[#161E30] border border-slate-200 dark:border-white/[0.08] rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-white/20 transition-all"
             />
           </div>
 
@@ -137,19 +137,19 @@ export function TransactionsTab({ txList, currency }) {
               className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
                 dateRange !== null
                   ? "border-slate-900 dark:border-white bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-                  : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-400"
+                  : "border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#161E30] text-slate-700 dark:text-slate-300 hover:border-slate-400"
               }`}
             >
               <Calendar size={14} />
               {activeDateLabel || "Date Range"}
             </button>
             {showDateMenu && (
-              <div className="absolute top-full mt-2 left-0 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden min-w-[160px] animate-fade-in">
+              <div className="absolute top-full mt-2 left-0 z-50 bg-white dark:bg-[#161E30] border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-xl overflow-hidden min-w-[160px] animate-fade-in">
                 {DATE_RANGES.map((r) => (
                   <button
                     key={r.label}
                     onClick={() => { setDateRange(r.days); setDateMenu(false); resetPage(); }}
-                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-700 ${
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.06] ${
                       dateRange === r.days
                         ? "font-semibold text-slate-900 dark:text-white"
                         : "text-slate-600 dark:text-slate-400"
@@ -169,14 +169,14 @@ export function TransactionsTab({ txList, currency }) {
               className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
                 categoryFilter
                   ? "border-slate-900 dark:border-white bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-                  : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-400"
+                  : "border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#161E30] text-slate-700 dark:text-slate-300 hover:border-slate-400"
               }`}
             >
               <Filter size={14} />
               {categoryFilter || "Category"}
             </button>
             {showCatMenu && (
-              <div className="absolute top-full mt-2 left-0 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden min-w-[190px] max-h-72 overflow-y-auto animate-fade-in">
+              <div className="absolute top-full mt-2 left-0 z-50 bg-white dark:bg-[#161E30] border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-xl overflow-hidden min-w-[190px] max-h-72 overflow-y-auto animate-fade-in">
                 {ALL_CATEGORIES.map((cat) => {
                   const { Icon, iconText } = getCategoryConfig(cat);
                   return (
@@ -187,7 +187,7 @@ export function TransactionsTab({ txList, currency }) {
                         setCatMenu(false);
                         resetPage();
                       }}
-                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700 ${
+                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2.5 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.06] ${
                         categoryFilter === cat
                           ? "font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-700"
                           : "text-slate-600 dark:text-slate-400"
@@ -220,13 +220,13 @@ export function TransactionsTab({ txList, currency }) {
       </div>
 
       {/* ── Table ── */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl shadow-sm overflow-hidden">
 
         {/* Desktop */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
+              <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-100 dark:border-white/[0.07]">
                 {["Date", "Description", "Category", "Amount"].map((h, i) => (
                   <th
                     key={h}
@@ -327,7 +327,7 @@ export function TransactionsTab({ txList, currency }) {
 
         {/* Pagination */}
         {pageCount > 1 && (
-          <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4">
+          <div className="px-6 py-4 border-t border-slate-100 dark:border-white/[0.07] flex items-center justify-between gap-4">
             <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
               {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of{" "}
               {filtered.length.toLocaleString()}
@@ -336,7 +336,7 @@ export function TransactionsTab({ txList, currency }) {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
               >
                 <ChevronLeft size={15} />
               </button>
@@ -354,7 +354,7 @@ export function TransactionsTab({ txList, currency }) {
                     className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${
                       page === p
                         ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                     }`}
                   >
                     {p}
@@ -365,7 +365,7 @@ export function TransactionsTab({ txList, currency }) {
               <button
                 onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
                 disabled={page === pageCount}
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
               >
                 <ChevronRight size={15} />
               </button>

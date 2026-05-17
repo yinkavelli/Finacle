@@ -271,6 +271,25 @@ export default function Home() {
       .slice(-6);
   }, [txList]);
 
+  // Current month stats for the hero card
+  const currentMonthStats = useMemo(() => {
+    if (!txList.length) return { income: 0, spending: 0, net: 0, label: "" };
+    const months = [...new Set(txList.map(tx => tx.date.slice(0, 7)))].sort();
+    const latestMonth = months[months.length - 1];
+    const [y, m] = latestMonth.split("-").map(Number);
+    const label = new Date(y, m - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
+    const monthTx = txList.filter(tx => tx.date.startsWith(latestMonth));
+    const income = monthTx.filter(t => Number(t.amount) > 0).reduce((s, t) => s + Number(t.amount), 0);
+    const spending = Math.abs(monthTx.filter(t => Number(t.amount) < 0).reduce((s, t) => s + Number(t.amount), 0));
+    return { income, spending, net: income - spending, label };
+  }, [txList]);
+
+  // Plain-string currency formatter for the hero (no JSX)
+  const fmtHero = (n) => {
+    const abs = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    return currency === "AED" ? `Đ ${abs}` : `$${abs}`;
+  };
+
   const getFullDateRange = () => {
     if (!txList.length) return "";
     const dates = txList
@@ -295,7 +314,7 @@ export default function Home() {
   return (
     <div className="flex w-full max-w-[100vw] h-[100dvh] overflow-hidden overscroll-none">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-[var(--color-card-border)] bg-[var(--color-background)] flex flex-col hidden md:flex z-10 relative">
+      <aside className="w-64 border-r border-slate-200 dark:border-white/[0.06] bg-[var(--color-background)] flex flex-col hidden md:flex z-10 relative">
         <div className="p-6">
           <div className="flex items-center">
             <img src="/logo-light.png" alt="Finacle Logo" className="w-full h-auto object-contain dark:hidden" />
@@ -337,7 +356,7 @@ export default function Home() {
             {txList.length > 0 && (
               <button
                 onClick={() => setDeleteConfirmOpen(true)}
-                className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0 shadow-sm"
+                className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center text-slate-500 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors shrink-0"
                 title="Clear All Transactions"
               >
                 <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
@@ -359,7 +378,7 @@ export default function Home() {
               <button
                 onClick={loadDemoData}
                 disabled={isUploading}
-                className="relative overflow-hidden flex items-center gap-1 md:gap-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm shrink-0"
+                className="relative overflow-hidden flex items-center gap-1 md:gap-2 border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.05] text-slate-700 dark:text-slate-200 px-3 py-1.5 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-medium hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors shrink-0"
                 title="Load Demo Data"
               >
                 <Sparkles size={16} className="text-emerald-500 md:w-[18px] md:h-[18px]" />
@@ -375,7 +394,7 @@ export default function Home() {
                   router.push("/login");
                 }
               }}
-              className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-500 transition-colors shrink-0 shadow-sm"
+              className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center text-slate-500 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-blue-400 hover:border-indigo-500 dark:hover:border-blue-400/50 transition-colors shrink-0"
               title="Log Out"
             >
               <Power size={18} />
@@ -384,49 +403,51 @@ export default function Home() {
         </header>
 
         {/* Tab Content */}
-        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-4 md:space-y-8 pb-24 md:pb-8">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-4 md:space-y-8 pb-28 md:pb-8">
 
           {/* DASHBOARD */}
           {activeTab === TABS.DASHBOARD && (
-            <div className="space-y-4 md:space-y-8 animate-slide-up">
-              <div className="grid grid-cols-2 gap-3 md:gap-6">
-                <MetricCard
-                  title="Total Income"
-                  amount={formatCurrency(totalIncome, currency)}
-                  subtitle="All-time"
-                  subtitleColor="up"
-                  variant="violet"
-                  icon={<Plus size={16} strokeWidth={2.5} />}
-                  onClick={() =>
-                    setSelectedInsight({
-                      type: "summary",
-                      title: "Total Income",
-                      isIncome: true,
-                      transactions: txList.filter((t) => Number(t.amount) > 0),
-                    })
-                  }
-                />
-                <MetricCard
-                  title="Total Spent"
-                  amount={formatCurrency(totalSpending, currency)}
-                  subtitle="All-time"
-                  subtitleColor="down"
-                  variant="emerald"
-                  icon={<ArrowDownRight size={16} strokeWidth={2.5} />}
-                  onClick={() =>
-                    setSelectedInsight({
-                      type: "summary",
-                      title: "Total Spent",
-                      isIncome: false,
-                      transactions: txList.filter((t) => Number(t.amount) < 0),
-                    })
-                  }
-                />
+            <div className="space-y-4 md:space-y-6 animate-slide-up">
+
+              {/* ── Revolut-style hero card ── */}
+              <div className="relative overflow-hidden rounded-2xl"
+                style={{ background: "linear-gradient(145deg, #1a237e 0%, #1d4ed8 45%, #2563eb 75%, #1e40af 100%)" }}>
+                <div className="absolute -right-6 -top-8 w-40 h-40 rounded-full bg-white/[0.04] pointer-events-none" />
+                <div className="absolute right-14 -bottom-12 w-52 h-52 rounded-full bg-blue-300/[0.04] pointer-events-none" />
+                <div className="relative z-10 p-5 md:p-7">
+                  <p className="text-white/50 text-[10px] uppercase tracking-widest mb-2">
+                    {currentMonthStats.label || "Overview"}
+                  </p>
+                  <p className={`text-[2.6rem] md:text-5xl font-black tabular-nums leading-none mb-1 ${currentMonthStats.net >= 0 ? "text-white" : "text-red-300"}`}>
+                    {fmtHero(Math.abs(currentMonthStats.net))}
+                  </p>
+                  <p className="text-white/40 text-xs mb-5">
+                    {txList.length === 0 ? "Upload a CSV to see your financial picture"
+                      : currentMonthStats.net >= 0 ? "↑ Net saved this month"
+                      : "↓ Over-spent this month"}
+                  </p>
+                  <div className="flex gap-2.5">
+                    <button
+                      onClick={() => setSelectedInsight({ type: "summary", title: "Total Income", isIncome: true, transactions: txList.filter(t => Number(t.amount) > 0) })}
+                      className="flex-1 bg-white/[0.1] hover:bg-white/[0.17] active:bg-white/20 rounded-xl px-3 py-2.5 transition-colors text-left"
+                    >
+                      <p className="text-white/50 text-[9px] uppercase tracking-wider">All-time Income</p>
+                      <p className="text-white font-bold text-sm mt-0.5 tabular-nums">{fmtHero(totalIncome)}</p>
+                    </button>
+                    <button
+                      onClick={() => setSelectedInsight({ type: "summary", title: "Total Spent", isIncome: false, transactions: txList.filter(t => Number(t.amount) < 0) })}
+                      className="flex-1 bg-white/[0.1] hover:bg-white/[0.17] active:bg-white/20 rounded-xl px-3 py-2.5 transition-colors text-left"
+                    >
+                      <p className="text-white/50 text-[9px] uppercase tracking-wider">All-time Spent</p>
+                      <p className="text-white font-bold text-sm mt-0.5 tabular-nums">{fmtHero(totalSpending)}</p>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 {/* Pie Chart */}
-                <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-indigo-500/30 bg-white dark:bg-slate-950 dark:bg-gradient-to-br dark:from-slate-900/80 dark:to-slate-950/80 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+                <div className="relative overflow-hidden rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-white dark:bg-[#0F1629] p-4 md:p-6 shadow-sm dark:shadow-[0_4px_32px_rgba(0,0,0,0.5)]">
                   <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
                   <div className="relative z-10">
                     <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-slate-900 dark:text-white">Spending Breakdown</h3>
@@ -527,7 +548,7 @@ export default function Home() {
                 </div>
 
                 {/* Bar Chart */}
-                <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-indigo-500/30 bg-white dark:bg-slate-950 dark:bg-gradient-to-br dark:from-slate-900/80 dark:to-slate-950/80 p-4 md:p-6 shadow-sm dark:shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+                <div className="relative overflow-hidden rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-white dark:bg-[#0F1629] p-4 md:p-6 shadow-sm dark:shadow-[0_4px_32px_rgba(0,0,0,0.5)]">
                   <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
                   <div className="relative z-10">
                     <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-slate-900 dark:text-white">Income vs Spending</h3>
@@ -646,7 +667,7 @@ export default function Home() {
           {/* SETTINGS */}
           {activeTab === TABS.SETTINGS && (
             <div className="space-y-6 animate-slide-up">
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+              <div className="bg-white dark:bg-[#0F1629] rounded-2xl border border-slate-100 dark:border-white/[0.07] shadow-sm overflow-hidden">
                 <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800">
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">Preferences</h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your dashboard settings and display options.</p>
@@ -694,9 +715,9 @@ export default function Home() {
           )}
         </div>
 
-        {/* Mobile Bottom Nav */}
-        <nav className="md:hidden fixed bottom-0 left-0 w-full z-50 bg-[var(--color-background)]/90 backdrop-blur-xl border-t border-[var(--color-card-border)] pb-safe">
-          <div className="flex justify-around items-center px-1 py-2">
+        {/* Mobile Bottom Nav — floating pill */}
+        <nav className="md:hidden fixed bottom-4 left-3 right-3 z-50 bg-slate-50/95 dark:bg-[#060A14]/97 backdrop-blur-xl rounded-[26px] border border-slate-200/80 dark:border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.8)]">
+          <div className="flex justify-around items-center px-2 py-2.5">
             {[
               { tab: TABS.DASHBOARD,    icon: <LayoutDashboard size={18} />, label: "Home"    },
               { tab: TABS.TRANSACTIONS, icon: <Receipt size={18} />,         label: "Txns"    },
@@ -707,7 +728,7 @@ export default function Home() {
               <button
                 key={tab}
                 onClick={() => changeTab(tab)}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-colors ${activeTab === tab ? "text-indigo-600 dark:text-indigo-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"}`}
+                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-colors ${activeTab === tab ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
               >
                 {icon}
                 <span className="text-[9px] font-medium">{label}</span>
@@ -838,7 +859,7 @@ function InsightModal({ insight, onClose, currency }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh] animate-zoom-in">
+      <div className="bg-white dark:bg-[#111829] w-full max-w-md rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_16px_60px_rgba(0,0,0,0.7)] border border-slate-100 dark:border-white/[0.07] overflow-hidden flex flex-col max-h-[85vh] animate-zoom-in">
         <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
           <div>
             <div className="flex items-center gap-2">
