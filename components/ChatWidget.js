@@ -165,7 +165,7 @@ export function ChatWidget({ txList = [], currency = "AED" }) {
 
       {/* Chat window */}
       <div
-        className={`fixed bottom-24 sm:bottom-8 right-4 left-4 sm:left-auto sm:right-6 sm:w-80 md:w-96 max-h-[600px] h-[75dvh] border border-indigo-500/20 dark:border-indigo-500/50 bg-white/95 dark:bg-[#0D1525]/97 backdrop-blur-xl shadow-[0_4px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_40px_rgba(0,0,0,0.5)] rounded-2xl flex flex-col z-50 transition-all duration-300 transform sm:origin-bottom-right overflow-hidden ${isOpen ? "translate-y-0 opacity-100 scale-100" : "translate-y-10 sm:translate-y-0 sm:scale-50 opacity-0 pointer-events-none"}`}
+        className={`fixed bottom-24 sm:bottom-8 right-4 left-4 sm:left-auto sm:right-6 sm:w-80 md:w-96 max-h-[600px] h-[75dvh] border border-indigo-500/20 dark:border-indigo-500/50 bg-[#EEF2FA]/97 dark:bg-[#0D1525]/97 backdrop-blur-xl shadow-[0_4px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_40px_rgba(0,0,0,0.5)] rounded-2xl flex flex-col z-50 transition-all duration-300 transform sm:origin-bottom-right overflow-hidden ${isOpen ? "translate-y-0 opacity-100 scale-100" : "translate-y-10 sm:translate-y-0 sm:scale-50 opacity-0 pointer-events-none"}`}
       >
         <div className="shimmer-overlay shimmer-overlay-indigo opacity-10 dark:opacity-20 pointer-events-none"></div>
 
@@ -204,7 +204,7 @@ export function ChatWidget({ txList = [], currency = "AED" }) {
                   <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${msg.role === "user" ? "bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-lg" : "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"}`}>
                     {msg.role === "user" ? <User size={16} /> : <Bot size={16} />}
                   </div>
-                  <div className={`p-3 text-sm ${msg.role === "user" ? "bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-2xl rounded-tr-sm shadow-lg" : "bg-slate-50 dark:bg-[#161E30]/90 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm border border-slate-100 dark:border-white/[0.08]"}`}>
+                  <div className={`p-3 text-sm ${msg.role === "user" ? "bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-2xl rounded-tr-sm shadow-lg" : "bg-[#DDE2ED] dark:bg-[#161E30]/90 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm border border-slate-100 dark:border-white/[0.08]"}`}>
                     {/* Typing dots while waiting for first chunk */}
                     {isCurrentlyStreaming && isEmpty ? (
                       <div className="flex items-center gap-1 py-0.5">

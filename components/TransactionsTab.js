@@ -116,7 +116,7 @@ export function TransactionsTab({ txList, currency }) {
       </div>
 
       {/* ── Filter bar ── */}
-      <div className="bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl p-4 shadow-sm">
+      <div className="bg-[#E8ECF5] dark:bg-[#0F1535] border border-slate-100 dark:border-white/[0.07] rounded-2xl p-4 shadow-sm">
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="relative flex-1 min-w-[160px]">
@@ -126,7 +126,7 @@ export function TransactionsTab({ txList, currency }) {
               value={search}
               onChange={(e) => { setSearch(e.target.value); resetPage(); }}
               placeholder="Search transactions…"
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-[#161E30] border border-slate-200 dark:border-white/[0.08] rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-white/20 transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-[#DDE2ED] dark:bg-[#161E30] border border-slate-200 dark:border-white/[0.08] rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 dark:focus:ring-white/20 transition-all"
             />
           </div>
 
@@ -220,13 +220,13 @@ export function TransactionsTab({ txList, currency }) {
       </div>
 
       {/* ── Table ── */}
-      <div className="bg-white dark:bg-[#0F1629] border border-slate-100 dark:border-white/[0.07] rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-[#E8ECF5] dark:bg-[#0F1535] border border-slate-100 dark:border-white/[0.07] rounded-2xl shadow-sm overflow-hidden">
 
         {/* Desktop */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-100 dark:border-white/[0.07]">
+              <tr className="bg-[#DDE2ED]/60 dark:bg-white/[0.03] border-b border-slate-100 dark:border-white/[0.07]">
                 {["Date", "Description", "Category", "Amount"].map((h, i) => (
                   <th
                     key={h}

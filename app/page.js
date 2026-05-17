@@ -447,7 +447,7 @@ export default function Home() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                 {/* Pie Chart */}
-                <div className="relative overflow-hidden rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-white dark:bg-[#0F1629] p-4 md:p-6 shadow-sm dark:shadow-[0_4px_32px_rgba(0,0,0,0.5)]">
+                <div className="relative overflow-hidden rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-[#E8ECF5] dark:bg-[#0F1535] p-4 md:p-6 shadow-sm dark:shadow-[0_4px_32px_rgba(0,0,0,0.5)]">
                   <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
                   <div className="relative z-10">
                     <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-slate-900 dark:text-white">Spending Breakdown</h3>
@@ -548,7 +548,7 @@ export default function Home() {
                 </div>
 
                 {/* Bar Chart */}
-                <div className="relative overflow-hidden rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-white dark:bg-[#0F1629] p-4 md:p-6 shadow-sm dark:shadow-[0_4px_32px_rgba(0,0,0,0.5)]">
+                <div className="relative overflow-hidden rounded-2xl border border-slate-100 dark:border-white/[0.07] bg-[#E8ECF5] dark:bg-[#0F1535] p-4 md:p-6 shadow-sm dark:shadow-[0_4px_32px_rgba(0,0,0,0.5)]">
                   <div className="shimmer-overlay shimmer-overlay-indigo opacity-50"></div>
                   <div className="relative z-10">
                     <h3 className="text-base md:text-lg font-semibold mb-4 md:mb-6 text-slate-900 dark:text-white">Income vs Spending</h3>
@@ -667,7 +667,7 @@ export default function Home() {
           {/* SETTINGS */}
           {activeTab === TABS.SETTINGS && (
             <div className="space-y-6 animate-slide-up">
-              <div className="bg-white dark:bg-[#0F1629] rounded-2xl border border-slate-100 dark:border-white/[0.07] shadow-sm overflow-hidden">
+              <div className="bg-[#E8ECF5] dark:bg-[#0F1535] rounded-2xl border border-slate-100 dark:border-white/[0.07] shadow-sm overflow-hidden">
                 <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800">
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">Preferences</h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your dashboard settings and display options.</p>
@@ -679,7 +679,7 @@ export default function Home() {
                       <h3 className="font-semibold text-slate-900 dark:text-white">Currency Display</h3>
                       <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Choose the primary currency symbol for all financial metrics.</p>
                     </div>
-                    <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                    <div className="flex items-center gap-2 bg-[#CDD3DF] dark:bg-[#0F1535] p-1 rounded-xl">
                       <button
                         onClick={() => setCurrency("AED")}
                         className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${currency === "AED" ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"}`}
@@ -859,8 +859,8 @@ function InsightModal({ insight, onClose, currency }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-[#111829] w-full max-w-md rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_16px_60px_rgba(0,0,0,0.7)] border border-slate-100 dark:border-white/[0.07] overflow-hidden flex flex-col max-h-[85vh] animate-zoom-in">
-        <div className="p-4 md:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-white/5">
+      <div className="bg-[#E8ECF5] dark:bg-[#0F1535] w-full max-w-md rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_16px_60px_rgba(0,0,0,0.7)] border border-slate-100 dark:border-white/[0.07] overflow-hidden flex flex-col max-h-[85vh] animate-zoom-in">
+        <div className="p-4 md:p-5 border-b border-black/[0.05] dark:border-white/[0.06] flex justify-between items-center bg-[#DDE2EC]/60 dark:bg-white/[0.03]">
           <div>
             <div className="flex items-center gap-2">
               {drillStack.length > 1 && (
@@ -888,16 +888,16 @@ function InsightModal({ insight, onClose, currency }) {
 
         {currentView.showToggle && (
           <div className="px-4 pt-4 pb-2">
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+            <div className="flex bg-[#CDD3DF] dark:bg-[#0F1535] p-1 rounded-lg">
               <button
                 onClick={() => setSummaryMode("category")}
-                className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${currentView.mode === "category" ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}
+                className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${currentView.mode === "category" ? "bg-[#E8ECF5] dark:bg-[#1B2260] text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
               >
                 By Category
               </button>
               <button
                 onClick={() => setSummaryMode("month")}
-                className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${currentView.mode === "month" ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}
+                className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${currentView.mode === "month" ? "bg-[#E8ECF5] dark:bg-[#1B2260] text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
               >
                 By Month
               </button>
@@ -916,31 +916,25 @@ function InsightModal({ insight, onClose, currency }) {
                 groupedItems.map((item, idx) => {
                   const pct = totalAmount > 0 ? ((item.amount / totalAmount) * 100).toFixed(1) : 0;
                   const catCfg = currentView.mode === "category" ? getCategoryConfig(item.name) : null;
-                  const accentColor = catCfg?.color || "#6366f1";
-                  const { Icon: CatIcon, iconBg, iconText, pill } = catCfg || {};
+                  const { Icon: CatIcon, iconBg, iconText, color: catColor } = catCfg || {};
                   return (
                     <div
                       key={idx}
                       onClick={() => handleGroupClick(item)}
-                      className="group relative flex items-center gap-3 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md transition-all overflow-hidden"
-                      style={{
-                        background: `linear-gradient(135deg, color-mix(in srgb, ${accentColor} 6%, white) 0%, white 60%)`,
-                      }}
+                      className="group flex items-center gap-3 p-3.5 rounded-xl cursor-pointer transition-colors
+                        bg-[#DDE2EC] hover:bg-[#D4DAE6]
+                        dark:bg-[#131850] dark:hover:bg-[#161D5A]
+                        border border-black/[0.04] dark:border-white/[0.05]"
                     >
-                      {/* dark mode card bg overlay */}
-                      <div className="absolute inset-0 hidden dark:block rounded-xl" style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${accentColor} 10%, #1e293b) 0%, #1e293b 60%)` }} />
-                      {/* Left accent bar */}
-                      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: accentColor }} />
-
                       {/* Icon */}
                       {CatIcon && (
-                        <div className={`relative z-10 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
                           <CatIcon size={16} className={iconText} />
                         </div>
                       )}
 
                       {/* Label */}
-                      <div className="relative z-10 flex-1 min-w-0">
+                      <div className="flex-1 min-w-0">
                         <span className="font-semibold text-slate-900 dark:text-white text-sm block">{item.name}</span>
                         <span className="text-xs text-slate-500 dark:text-slate-400">
                           {item.transactions.length} transaction{item.transactions.length !== 1 ? "s" : ""}
@@ -948,20 +942,17 @@ function InsightModal({ insight, onClose, currency }) {
                       </div>
 
                       {/* Amount + pct */}
-                      <div className="relative z-10 flex flex-col items-end gap-1 shrink-0">
+                      <div className="flex flex-col items-end gap-1 shrink-0">
                         <span className={`text-sm font-bold tabular-nums ${currentView.isIncome === true ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>
                           {formatCurrencyLocal(item.amount)}
                         </span>
-                        <span
-                          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                          style={{ backgroundColor: `${accentColor}18`, color: accentColor }}
-                        >
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                           {pct}%
                         </span>
                       </div>
 
-                      {/* Chevron hint */}
-                      <svg className="relative z-10 w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      {/* Chevron */}
+                      <svg className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
@@ -972,40 +963,35 @@ function InsightModal({ insight, onClose, currency }) {
                   const amt = Math.abs(Number(tx.amount));
                   const pct = totalAmount > 0 ? ((amt / totalAmount) * 100).toFixed(1) : 0;
                   const isIncome = Number(tx.amount) > 0;
-                  const { Icon: TxIcon, iconBg, iconText, pill, color: txColor } = getCategoryConfig(tx.category);
+                  const { Icon: TxIcon, iconBg, iconText, pill } = getCategoryConfig(tx.category);
                   return (
                     <div
                       key={tx.id}
-                      className="relative flex items-center gap-3 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden"
-                      style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${txColor} 4%, white) 0%, white 50%)` }}
+                      className="flex items-center gap-3 p-3.5 rounded-xl
+                        bg-[#DDE2EC] dark:bg-[#131850]
+                        border border-black/[0.04] dark:border-white/[0.05]"
                     >
-                      <div className="absolute inset-0 hidden dark:block rounded-xl" style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${txColor} 8%, #1e293b) 0%, #1e293b 55%)` }} />
-                      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl" style={{ backgroundColor: txColor }} />
-
                       {/* Icon */}
-                      <div className={`relative z-10 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
                         <TxIcon size={15} className={iconText} />
                       </div>
 
-                      <div className="relative z-10 flex-1 min-w-0">
+                      <div className="flex-1 min-w-0">
                         <span className="font-semibold text-slate-900 dark:text-white text-sm block truncate">{tx.description}</span>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[11px] text-slate-400 dark:text-slate-500">{formatDateLocal(tx.date)}</span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">{formatDateLocal(tx.date)}</span>
                           <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${pill}`}>
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${pill}`}>
                             {tx.category}
                           </span>
                         </div>
                       </div>
 
-                      <div className="relative z-10 flex flex-col items-end gap-1 shrink-0">
+                      <div className="flex flex-col items-end gap-1 shrink-0">
                         <span className={`text-sm font-bold tabular-nums ${isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-white"}`}>
                           {formatCurrencyLocal(tx.amount)}
                         </span>
-                        <span
-                          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                          style={{ backgroundColor: `${txColor}18`, color: txColor }}
-                        >
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                           {pct}%
                         </span>
                       </div>
