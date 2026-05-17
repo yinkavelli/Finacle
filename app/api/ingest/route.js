@@ -115,15 +115,34 @@ export async function POST(request) {
       const descList = Array.from(uniqueDescriptions);
       if (!skipGPT && descList.length > 0) {
         const prompt = `
-          You are a precise financial categorization engine.
-          Categorize these transaction descriptions into one of these short categories:
-          "Food & Dining", "Transportation", "Housing", "Shopping", "Income", "Transfer", "Entertainment", "Utilities", "Subscription", "General".
+You are a precise financial categorization engine for UAE bank transactions.
 
-          Return ONLY a valid JSON object mapping the exact description to its category.
-          Example: { "categories": { "UBER EATS": "Food & Dining", "NETFLIX": "Subscription" } }
+Categorize each transaction description into exactly one of these categories.
+Use sub-categories when you are confident — they provide more detail.
 
-          Descriptions:
-          ${JSON.stringify(descList)}
+CATEGORIES (use the most specific one that fits):
+
+Food & Dining       — restaurants, cafes, fast food, food delivery
+Transportation      — public transport, metro, bus (general transport only)
+  Taxi              — Uber, Careem, taxis, ride-hailing
+  Fuel              — petrol stations, ADNOC, ENOC, fuel
+  Auto Repair       — car service, garage, auto workshop, spare parts
+Housing             — utilities tied to housing (general)
+  Rent              — rent payments, property payments
+Shopping            — general retail, online shopping, department stores
+  Groceries         — supermarkets, Carrefour, Spinneys, Lulu, grocery stores
+Income              — salary, deposit, inward transfer labelled as income
+Transfer            — peer-to-peer transfers, bank transfers, remittances
+Entertainment       — cinema, events, gaming, streaming services
+Utilities           — DEWA, electricity, water, internet, phone bills
+Subscription        — Netflix, Spotify, Apple, recurring subscriptions
+General             — anything that doesn't fit the above
+
+Return ONLY a valid JSON object:
+{ "categories": { "DESCRIPTION": "Category", ... } }
+
+Descriptions:
+${JSON.stringify(descList)}
         `;
 
         try {

@@ -5,7 +5,7 @@ import { ChatWidget } from "@/components/ChatWidget";
 import { TransactionsTab } from "@/components/TransactionsTab";
 import { BudgetTab } from "@/components/BudgetTab";
 import { InsightsTab } from "@/components/InsightsTab";
-import { getCategoryConfig } from "@/utils/categoryConfig";
+import { getCategoryConfig, getParentCategory } from "@/utils/categoryConfig";
 import {
   LayoutDashboard,
   Receipt,
@@ -792,16 +792,25 @@ function InsightModal({ insight, onClose, currency }) {
   };
 
   let groupedItems = [];
-  if (currentView.mode === "category" || currentView.mode === "month") {
+  if (currentView.mode === "category" || currentView.mode === "subcategory" || currentView.mode === "month") {
     const groups = {};
     txs.forEach((tx) => {
-      const key =
-        currentView.mode === "category"
-          ? tx.category || "Uncategorized"
-          : parseLocalDate(tx.date).toLocaleString("en-US", { month: "long", year: "numeric" });
+      let key;
+      if (currentView.mode === "category") {
+        key = getParentCategory(tx.category) || "Uncategorized";
+      } else if (currentView.mode === "subcategory") {
+        key = tx.category || "Uncategorized";
+      } else {
+        key = parseLocalDate(tx.date).toLocaleString("en-US", { month: "long", year: "numeric" });
+      }
       if (!groups[key]) groups[key] = { name: key, amount: 0, transactions: [] };
       groups[key].amount += Math.abs(Number(tx.amount));
       groups[key].transactions.push(tx);
+    });
+    // Mark groups that have sub-category detail worth drilling into
+    Object.values(groups).forEach(g => {
+      const subs = new Set(g.transactions.map(t => getParentCategory(t.category) === g.name ? t.category : null).filter(Boolean));
+      g.hasSubcategories = subs.size > 1 || (subs.size === 1 && ![...subs][0].includes(g.name));
     });
     groupedItems = Object.values(groups).sort((a, b) => b.amount - a.amount);
   }
@@ -810,6 +819,8 @@ function InsightModal({ insight, onClose, currency }) {
     let nextMode = "transactions";
     if (currentView.showToggle) {
       nextMode = currentView.mode === "category" ? "month" : "category";
+    } else if (currentView.mode === "category" && item.hasSubcategories) {
+      nextMode = "subcategory";
     }
     setDrillStack((prev) => [
       ...prev,

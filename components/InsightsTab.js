@@ -12,7 +12,7 @@ import {
   Line, XAxis, YAxis,
   CartesianGrid, Tooltip, Cell,
 } from "recharts";
-import { getCategoryConfig } from "@/utils/categoryConfig";
+import { getCategoryConfig, getParentCategory } from "@/utils/categoryConfig";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -112,7 +112,8 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
   const categoryBreakdown = useMemo(() => {
     const totals = {};
     txList.filter(tx => tx.date.startsWith(activeMonth) && Number(tx.amount) < 0).forEach(tx => {
-      totals[tx.category] = (totals[tx.category] || 0) + Math.abs(Number(tx.amount));
+      const parent = getParentCategory(tx.category);
+      totals[parent] = (totals[parent] || 0) + Math.abs(Number(tx.amount));
     });
     return Object.entries(totals)
       .sort(([,a],[,b]) => b - a)
@@ -131,8 +132,9 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
     const spendByMonthCat = {};
     txList.filter(tx => Number(tx.amount) < 0).forEach(tx => {
       const mk = tx.date.slice(0,7);
+      const parent = getParentCategory(tx.category);
       if (!spendByMonthCat[mk]) spendByMonthCat[mk] = {};
-      spendByMonthCat[mk][tx.category] = (spendByMonthCat[mk][tx.category] || 0) + Math.abs(Number(tx.amount));
+      spendByMonthCat[mk][parent] = (spendByMonthCat[mk][parent] || 0) + Math.abs(Number(tx.amount));
     });
     return categoryBreakdown.map(({ cat, amount, pctOfIncome, pctOfSpending }) => {
       const prevAmt = spendByMonthCat[prev1]?.[cat] || 0;
@@ -161,7 +163,7 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
     return Array.from({ length: 6 }, (_, i) => {
       const mk = offsetMonth(activeMonth, i - 5);
       const amount = txList
-        .filter(tx => tx.date.startsWith(mk) && tx.category === selectedCategory && Number(tx.amount) < 0)
+        .filter(tx => tx.date.startsWith(mk) && getParentCategory(tx.category) === selectedCategory && Number(tx.amount) < 0)
         .reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
       return { month: labelShort(mk), amount: Math.round(amount * 100) / 100, isActive: mk === activeMonth };
     });

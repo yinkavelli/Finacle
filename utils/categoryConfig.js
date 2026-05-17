@@ -1,9 +1,48 @@
 import {
   Utensils, Car, Home, ShoppingBag, TrendingUp,
   ArrowRightLeft, Tv, Zap, Monitor, Package,
+  // Sub-category icons
+  Wrench, Fuel, Building2, ShoppingCart,
 } from "lucide-react";
 
+// ── Sub-category → Parent mapping ────────────────────────────────────────────
+
+export const SUBCATEGORY_PARENT = {
+  // Transportation sub-categories
+  "Taxi":        "Transportation",
+  "Fuel":        "Transportation",
+  "Auto Repair": "Transportation",
+  // Housing sub-categories
+  "Rent":        "Housing",
+  // Shopping sub-categories
+  "Groceries":   "Shopping",
+  // All top-level categories map to themselves (backward-compatible)
+  "Food & Dining":  "Food & Dining",
+  "Transportation": "Transportation",
+  "Housing":        "Housing",
+  "Shopping":       "Shopping",
+  "Income":         "Income",
+  "Transfer":       "Transfer",
+  "Entertainment":  "Entertainment",
+  "Utilities":      "Utilities",
+  "Subscription":   "Subscription",
+  "General":        "General",
+};
+
+/** Returns the parent/display category for any category or sub-category. */
+export const getParentCategory = (cat) => SUBCATEGORY_PARENT[cat] || cat;
+
+/** Sub-categories grouped under each parent. */
+export const PARENT_SUBCATEGORIES = {
+  "Transportation": ["Taxi", "Fuel", "Auto Repair"],
+  "Housing":        ["Rent"],
+  "Shopping":       ["Groceries"],
+};
+
+// ── Category visual config ────────────────────────────────────────────────────
+
 export const CATEGORY_CONFIG = {
+  // ── Top-level ──────────────────────────────────────────────────────────────
   "Food & Dining": {
     Icon: Utensils,
     color: "#F59E0B",
@@ -84,9 +123,72 @@ export const CATEGORY_CONFIG = {
     iconText: "text-slate-500 dark:text-slate-400",
     bar: "#94A3B8",
   },
+
+  // ── Transportation sub-categories ─────────────────────────────────────────
+  "Taxi": {
+    Icon: Car,
+    color: "#60A5FA",
+    pill: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300",
+    iconBg: "bg-blue-50 dark:bg-blue-500/10",
+    iconText: "text-blue-500 dark:text-blue-300",
+    bar: "#60A5FA",
+    parent: "Transportation",
+  },
+  "Fuel": {
+    Icon: Fuel,
+    color: "#2563EB",
+    pill: "bg-blue-100 text-blue-800 dark:bg-blue-500/15 dark:text-blue-300",
+    iconBg: "bg-blue-100 dark:bg-blue-500/15",
+    iconText: "text-blue-700 dark:text-blue-300",
+    bar: "#2563EB",
+    parent: "Transportation",
+  },
+  "Auto Repair": {
+    Icon: Wrench,
+    color: "#1D4ED8",
+    pill: "bg-blue-100 text-blue-900 dark:bg-blue-600/15 dark:text-blue-200",
+    iconBg: "bg-blue-100 dark:bg-blue-600/15",
+    iconText: "text-blue-800 dark:text-blue-200",
+    bar: "#1D4ED8",
+    parent: "Transportation",
+  },
+
+  // ── Housing sub-categories ─────────────────────────────────────────────────
+  "Rent": {
+    Icon: Building2,
+    color: "#4F46E5",
+    pill: "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/15 dark:text-indigo-300",
+    iconBg: "bg-indigo-100 dark:bg-indigo-500/15",
+    iconText: "text-indigo-700 dark:text-indigo-300",
+    bar: "#4F46E5",
+    parent: "Housing",
+  },
+
+  // ── Shopping sub-categories ────────────────────────────────────────────────
+  "Groceries": {
+    Icon: ShoppingCart,
+    color: "#0284C7",
+    pill: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300",
+    iconBg: "bg-sky-100 dark:bg-sky-500/15",
+    iconText: "text-sky-700 dark:text-sky-300",
+    bar: "#0284C7",
+    parent: "Shopping",
+  },
 };
 
 export const getCategoryConfig = (category) =>
   CATEGORY_CONFIG[category] || CATEGORY_CONFIG["General"];
 
-export const ALL_CATEGORIES = Object.keys(CATEGORY_CONFIG);
+/** All top-level (parent) categories in display order. */
+export const ALL_PARENT_CATEGORIES = [
+  "Food & Dining", "Transportation", "Housing", "Shopping",
+  "Income", "Transfer", "Entertainment", "Utilities", "Subscription", "General",
+];
+
+/** All categories including sub-categories, for filter dropdowns. */
+export const ALL_CATEGORIES = [
+  ...ALL_PARENT_CATEGORIES,
+  "Taxi", "Fuel", "Auto Repair",
+  "Rent",
+  "Groceries",
+];
