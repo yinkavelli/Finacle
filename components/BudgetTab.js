@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Plus, X, Trash2, Pencil } from "lucide-react";
 import { getCategoryConfig, ALL_PARENT_CATEGORIES, getParentCategory } from "@/utils/categoryConfig";
+import { DirhamSvg } from "@/utils/fmt";
 
 const DEFAULT_BUDGETS = [
   { id: "default-1", name: "Food & Dining",  category: "Food & Dining",  limit: 2000 },
@@ -89,7 +90,9 @@ export function BudgetTab({ txList, currency, userId }) {
 
   const fmt = (n) => {
     const s = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    return currency === "AED" ? `Đ ${s}` : `$${s}`;
+    return currency === "AED"
+      ? <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}><DirhamSvg />{s}</span>
+      : `$${s}`;
   };
 
   const totalLimit   = budgets.reduce((s, b) => s + Number(b.limit), 0);

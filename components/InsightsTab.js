@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getCategoryConfig, getParentCategory } from "@/utils/categoryConfig";
+import { DirhamSvg } from "@/utils/fmt";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -51,7 +52,9 @@ function Eyebrow({ num, label }) {
 export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
   const fmt = (n) => {
     const s = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    return currency === "AED" ? `Đ ${s}` : `$${s}`;
+    return currency === "AED"
+      ? <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}><DirhamSvg />{s}</span>
+      : `$${s}`;
   };
 
   // Month navigation

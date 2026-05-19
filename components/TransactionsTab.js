@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { Search, Download } from "lucide-react";
 import { getCategoryConfig, ALL_CATEGORIES, getParentCategory } from "@/utils/categoryConfig";
+import { DirhamSvg } from "@/utils/fmt";
 
 const PAGE_SIZE = 20;
 
@@ -45,7 +46,10 @@ export function TransactionsTab({ txList, currency }) {
 
   const fmt = (amount) => {
     const abs = Math.abs(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return currency === "AED" ? `Đ ${abs}` : `$${abs}`;
+    // Returns JSX — callers must render this in JSX context
+    return currency === "AED"
+      ? <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}><DirhamSvg />{abs}</span>
+      : `$${abs}`;
   };
 
   const filtered = useMemo(() => {

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <pattern id="markDots" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="5" cy="5" r="3.8" fill="#FFB347"></circle>
+    </pattern>
+    <linearGradient id="markFade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="white" stop-opacity="1"></stop>
+      <stop offset="40%" stop-color="white" stop-opacity="0.8"></stop>
+      <stop offset="70%" stop-color="white" stop-opacity="0.1"></stop>
+      <stop offset="100%" stop-color="white" stop-opacity="0"></stop>
+    </linearGradient>
+    <mask id="markMask">
+      <rect width="200" height="200" fill="url(#markFade)"></rect>
+    </mask>
+    <clipPath id="markClip">
+      <path d="M 120,20 A 80,80 0 1 0 120,180 Z"></path>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#markClip)">
+    <rect width="200" height="200" fill="url(#markDots)" mask="url(#markMask)"></rect>
+  </g>
+</svg>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Axinity — Personal Finance, examined.</title>
+<link rel="stylesheet" href="design-system/colors_and_type.css" />
+<style>
+  html, body { min-height: 100vh; background: #050403; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .ax-num { font-feature-settings: "tnum" 1, "lnum" 1; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+  #stage-glow {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 50%, rgba(255,179,71,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 100%, rgba(201,165,90,0.04) 0%, transparent 50%);
+  }
+  #root { position: relative; z-index: 1; }
+
+  @keyframes ax-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes ax-pulse-gold {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(201,165,90,0.35); }
+    70% { box-shadow: 0 0 0 14px rgba(201,165,90,0); }
+  }
+  @keyframes ax-amber-drift {
+    0% { transform: translate(-3%, -2%) scale(1); }
+    50% { transform: translate(3%, 4%) scale(1.05); }
+    100% { transform: translate(-3%, -2%) scale(1); }
+  }
+  @keyframes ax-ring-grow {
+    from { stroke-dashoffset: var(--ring-start); }
+    to { stroke-dashoffset: var(--ring-end); }
+  }
+  @keyframes ax-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ax-slide-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes ax-typing {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-2px); }
+  }
+</style>
+</head>
+<body>
+  <div id="stage-glow"></div>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+
+  <!-- Reuse Axinity UI primitives (icons, headers, halftone, tab bar, merchant chip, status bar) -->
+  <script type="text/babel" src="src/ui.jsx"></script>
+
+  <!-- Budget-specific code -->
+  <script type="text/babel" src="budget-src/data.jsx"></script>
+  <script type="text/babel" src="budget-src/shared.jsx"></script>
+  <script type="text/babel" src="budget-src/chat.jsx"></script>
+  <script type="text/babel" src="budget-src/screens-home.jsx"></script>
+  <script type="text/babel" src="budget-src/screens-txns.jsx"></script>
+  <script type="text/babel" src="budget-src/screens-budget.jsx"></script>
+  <script type="text/babel" src="budget-src/screens-insights.jsx"></script>
+  <script type="text/babel" src="budget-src/screens-settings.jsx"></script>
+  <script type="text/babel" src="budget-src/app.jsx"></script>
+</body>
+</html>

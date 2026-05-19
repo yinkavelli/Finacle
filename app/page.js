@@ -5,7 +5,7 @@ import { TransactionsTab } from "@/components/TransactionsTab";
 import { BudgetTab } from "@/components/BudgetTab";
 import { InsightsTab } from "@/components/InsightsTab";
 import { getCategoryConfig, getParentCategory } from "@/utils/categoryConfig";
-import { ArrowLeft, X, Trash2, Sparkles, Plus, Upload } from "lucide-react";
+import { ArrowLeft, X, Sparkles, Plus, Upload, LogIn } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
@@ -24,25 +24,84 @@ const parseLocalDate = (dateStr) => {
   return new Date(y, m - 1, d);
 };
 
-const fmt = (n, currency = "AED") => {
+// ── Dirham symbol (UAE — 2 horizontal lines across the D) ─────────────────
+
+function DirhamSvg({ size = "0.9em", style = {} }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      width={size} height={size}
+      fill="none" stroke="currentColor" strokeWidth="1.8"
+      strokeLinecap="round" strokeLinejoin="round"
+      style={{ display: "inline-block", verticalAlign: "middle", position: "relative", top: "-0.05em", ...style }}
+    >
+      {/* D shape */}
+      <path d="M6 3 h4 a6 6 0 0 1 0 12 H6 V3z" />
+      {/* Two horizontal lines */}
+      <line x1="3" y1="8"  x2="12" y2="8"  />
+      <line x1="3" y1="11" x2="12" y2="11" />
+    </svg>
+  );
+}
+
+// String formatter (for non-JSX contexts — fallback only)
+const fmtStr = (n, currency = "AED") => {
   const abs = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   return currency === "AED" ? `Đ ${abs}` : `$${abs}`;
 };
 
-const fmtFull = (n, currency = "AED") => {
-  const abs = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return currency === "AED" ? `Đ ${abs}` : `$${abs}`;
-};
+// JSX formatter — renders the proper Dirham SVG
+function Amt({ value, currency = "AED", showSign = false, style = {} }) {
+  const abs = Math.abs(value).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const sign = showSign && value > 0 ? "+" : value < 0 ? "−" : "";
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 2, ...style }}>
+      {sign && <span>{sign}</span>}
+      {currency === "AED" ? <DirhamSvg /> : <span>$</span>}
+      <span>{abs}</span>
+    </span>
+  );
+}
+
+function AmtFull({ value, currency = "AED", showSign = false, style = {} }) {
+  const abs = Math.abs(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const sign = showSign && value > 0 ? "+" : value < 0 ? "−" : "";
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 2, ...style }}>
+      {sign && <span>{sign}</span>}
+      {currency === "AED" ? <DirhamSvg /> : <span>$</span>}
+      <span>{abs}</span>
+    </span>
+  );
+}
+
+// ── Wordmark ───────────────────────────────────────────────────────────────
+
+function AxyFolioWordmark({ height = 28 }) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 1, lineHeight: 1 }}>
+      <span style={{
+        fontFamily: "var(--ax-font-logo)",
+        fontWeight: 700, fontSize: height * 0.75,
+        letterSpacing: "0.02em", color: "var(--ax-fg)",
+      }}>AXY</span>
+      <span style={{
+        fontFamily: "var(--ax-font-logo)",
+        fontWeight: 200, fontSize: height * 0.65,
+        letterSpacing: "0.4em", textTransform: "uppercase",
+        color: "var(--ax-gold)", marginLeft: 4,
+      }}>FOLIO</span>
+    </div>
+  );
+}
 
 // ── Tab icons ──────────────────────────────────────────────────────────────
 
-function IconHome({ active }) {
+function IconHome() {
   return (
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7" rx="1.2" />
-      <rect x="14" y="3" width="7" height="7" rx="1.2" />
-      <rect x="3" y="14" width="7" height="7" rx="1.2" />
-      <rect x="14" y="14" width="7" height="7" rx="1.2" />
+      <rect x="3" y="3" width="7" height="7" rx="1.2" /><rect x="14" y="3" width="7" height="7" rx="1.2" />
+      <rect x="3" y="14" width="7" height="7" rx="1.2" /><rect x="14" y="14" width="7" height="7" rx="1.2" />
     </svg>
   );
 }
@@ -118,8 +177,7 @@ function CatIcon({ category, size = 36 }) {
       width: size, height: size, borderRadius: "50%",
       background: "var(--ax-midnight)",
       border: `1px solid ${color}55`,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      flexShrink: 0,
+      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
     }}>
       <cfg.Icon size={size * 0.44} style={{ color }} />
     </div>
@@ -130,7 +188,6 @@ function CatIcon({ category, size = 36 }) {
 
 function TxnRow({ tx, isLast, onClick, currency }) {
   const isIncome = Number(tx.amount) > 0;
-  const amt = fmtFull(tx.amount, currency);
   const d = parseLocalDate(tx.date);
   const dateStr = `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
   return (
@@ -151,13 +208,10 @@ function TxnRow({ tx, isLast, onClick, currency }) {
           {tx.category} · {dateStr}
         </div>
       </div>
-      <div style={{
+      <AmtFull value={tx.amount} currency={currency} showSign={isIncome} style={{
         fontFamily: "var(--ax-font-display)", fontSize: 15, fontWeight: 400,
         color: isIncome ? "var(--ax-gold)" : "var(--ax-fg)",
-        whiteSpace: "nowrap",
-      }}>
-        {isIncome ? "+" : ""}{amt}
-      </div>
+      }} />
     </div>
   );
 }
@@ -202,22 +256,121 @@ function HealthPill({ status }) {
   );
 }
 
-// ── Wordmark ───────────────────────────────────────────────────────────────
+// ── Landing screen ─────────────────────────────────────────────────────────
 
-function AxyFolioWordmark({ height = 28 }) {
+function LandingScreen({ onExplore, onSignIn }) {
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 1, lineHeight: 1 }}>
-      <span style={{
-        fontFamily: "var(--ax-font-logo, 'Montserrat', 'Helvetica Neue', Arial, sans-serif)",
-        fontWeight: 700, fontSize: height * 0.75,
-        letterSpacing: "0.02em", color: "var(--ax-fg)",
-      }}>AXY</span>
-      <span style={{
-        fontFamily: "var(--ax-font-logo, 'Montserrat', 'Helvetica Neue', Arial, sans-serif)",
-        fontWeight: 200, fontSize: height * 0.65,
-        letterSpacing: "0.4em", textTransform: "uppercase",
-        color: "var(--ax-gold)", marginLeft: 4,
-      }}>FOLIO</span>
+    <div style={{
+      minHeight: "100dvh", display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      background: "var(--ax-midnight)",
+      backgroundImage: [
+        "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,165,90,0.15) 0%, transparent 60%)",
+        "radial-gradient(ellipse 60% 40% at 80% 90%, rgba(201,165,90,0.06) 0%, transparent 60%)",
+      ].join(", "),
+      padding: "40px 24px",
+      position: "relative", overflow: "hidden",
+    }}>
+      {/* Halftone top-right */}
+      <div style={{
+        position: "absolute", top: 0, right: 0, width: 280, height: 280,
+        backgroundImage: "radial-gradient(circle at 5px 5px, #FFB347 3.8px, transparent 4px)",
+        backgroundSize: "12px 12px",
+        WebkitMaskImage: "radial-gradient(ellipse at top right, #000 0%, transparent 65%)",
+        maskImage: "radial-gradient(ellipse at top right, #000 0%, transparent 65%)",
+        opacity: 0.22, pointerEvents: "none",
+      }} />
+      {/* Halftone bottom-left */}
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, width: 200, height: 200,
+        backgroundImage: "radial-gradient(circle at 5px 5px, #FFB347 3.8px, transparent 4px)",
+        backgroundSize: "12px 12px",
+        WebkitMaskImage: "radial-gradient(ellipse at bottom left, #000 0%, transparent 65%)",
+        maskImage: "radial-gradient(ellipse at bottom left, #000 0%, transparent 65%)",
+        opacity: 0.12, pointerEvents: "none",
+      }} />
+
+      <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", alignItems: "center", animation: "slide-up 0.5s cubic-bezier(0.22,1,0.36,1) forwards" }}>
+
+        {/* Wordmark */}
+        <AxyFolioWordmark height={36} />
+
+        {/* Gold divider */}
+        <div style={{ width: 48, height: 1, background: "var(--ax-gold)", margin: "18px 0 20px", opacity: 0.6 }} />
+
+        {/* Tagline */}
+        <div style={{
+          fontFamily: "var(--ax-font-display)", fontSize: 32, fontWeight: 300,
+          textAlign: "center", lineHeight: 1.25, color: "var(--ax-fg)",
+          marginBottom: 10,
+        }}>
+          Your financial <em style={{ color: "var(--ax-gold)" }}>folio.</em>
+        </div>
+        <div style={{
+          fontSize: 14, color: "var(--ax-fg-muted)", textAlign: "center",
+          lineHeight: 1.6, marginBottom: 40, maxWidth: 280,
+        }}>
+          Plan, track and understand your money — with institutional clarity.
+        </div>
+
+        {/* CTA buttons */}
+        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+          <button onClick={onExplore} style={{
+            width: "100%", padding: "16px",
+            background: "linear-gradient(135deg, var(--ax-gold) 0%, var(--ax-gold-bright) 50%, var(--ax-gold-dim) 100%)",
+            border: "none", borderRadius: "var(--ax-radius-2)",
+            color: "var(--ax-midnight)",
+            fontFamily: "var(--ax-font-logo)", fontSize: 11,
+            letterSpacing: "0.32em", textTransform: "uppercase", fontWeight: 700,
+            cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+            boxShadow: "0 8px 32px rgba(201,165,90,0.35)",
+            transition: "box-shadow 220ms var(--ax-ease), transform 220ms var(--ax-ease)",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 12px 40px rgba(201,165,90,0.5)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+          onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 8px 32px rgba(201,165,90,0.35)"; e.currentTarget.style.transform = "none"; }}>
+            <Sparkles size={14} />
+            Explore the demo
+          </button>
+
+          <button onClick={onSignIn} style={{
+            width: "100%", padding: "16px",
+            background: "transparent",
+            border: "1px solid var(--ax-border-strong)",
+            borderRadius: "var(--ax-radius-2)",
+            color: "var(--ax-fg)",
+            fontFamily: "var(--ax-font-logo)", fontSize: 11,
+            letterSpacing: "0.32em", textTransform: "uppercase", fontWeight: 700,
+            cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+            transition: "border-color 220ms var(--ax-ease)",
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = "var(--ax-border-gold)"}
+          onMouseLeave={e => e.currentTarget.style.borderColor = "var(--ax-border-strong)"}>
+            <LogIn size={14} />
+            Sign in
+          </button>
+        </div>
+
+        {/* Feature hints */}
+        <div style={{ marginTop: 48, display: "flex", flexDirection: "column", gap: 14, width: "100%" }}>
+          {[
+            { num: "01", label: "Coverage ring — know your month at a glance" },
+            { num: "02", label: "Category trends — see exactly where it goes" },
+            { num: "03", label: "AI Advisor — ask anything about your finances" },
+          ].map(f => (
+            <div key={f.num} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{
+                fontSize: 10, fontWeight: 500, letterSpacing: "0.28em",
+                color: "var(--ax-gold)", opacity: 0.6, fontFamily: "var(--ax-font-logo)",
+                minWidth: 22,
+              }}>{f.num}</span>
+              <span style={{ flex: 1, height: 1, background: "var(--ax-border)" }} />
+              <span style={{ fontSize: 11, color: "var(--ax-fg-muted)", letterSpacing: "0.06em" }}>{f.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -234,26 +387,58 @@ export default function Home() {
   const [user, setUser]                       = useState(null);
   const [selectedInsight, setSelectedInsight] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [appMode, setAppMode]                 = useState("landing"); // "landing" | "guest" | "auth"
+  const [guestBannerDismissed, setGuestBannerDismissed] = useState(false);
+
   const fileInputRef = useRef(null);
   const supabase     = useMemo(() => createClient(), []);
   const router       = useRouter();
 
+  const isGuest = appMode === "guest";
   const changeTab = (tab) => { setActiveTab(tab); setSelectedInsight(null); };
 
   useEffect(() => {
-    const fetchUserAndData = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) { router.push("/login"); return; }
-      setUser(user);
-      const { data: txData, error: txError } = await supabase
-        .from("transactions").select("*").order("date", { ascending: false });
-      if (!txError && txData) setTxList(txData);
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUser(user);
+        setAppMode("auth");
+        const { data: txData, error: txError } = await supabase
+          .from("transactions").select("*").order("date", { ascending: false });
+        if (!txError && txData) setTxList(txData);
+      }
       setIsLoading(false);
     };
-    fetchUserAndData();
-  }, [router, supabase]);
+    init();
+  }, [supabase]);
+
+  const loadDemoData = async () => {
+    setIsUploading(true);
+    setUploadProgress("Loading demo ledger…");
+    try {
+      const res  = await fetch("/showcase_sample.csv");
+      const blob = await res.blob();
+      const file = new File([blob], "showcase_sample.csv", { type: "text/csv" });
+      const formData = new FormData();
+      formData.append("file", file);
+      const ingestRes = await fetch("/api/ingest", { method: "POST", body: formData });
+      const data = await ingestRes.json();
+      if (data.success) {
+        setTxList((prev) => [...data.transactions, ...prev]);
+      } else {
+        // Fallback: still enter guest mode even if ingest fails
+      }
+    } catch {}
+    finally { setIsUploading(false); setUploadProgress(""); }
+  };
+
+  const enterGuestMode = async () => {
+    setAppMode("guest");
+    await loadDemoData();
+  };
 
   const handleFileUpload = async (e) => {
+    if (isGuest) return;
     const file = e.target.files?.[0];
     if (!file) return;
     setIsUploading(true);
@@ -277,29 +462,9 @@ export default function Home() {
     }
   };
 
-  const loadDemoData = async () => {
-    setIsUploading(true);
-    setUploadProgress("Loading demo ledger…");
-    try {
-      const res  = await fetch("/showcase_sample.csv");
-      const blob = await res.blob();
-      const file = new File([blob], "showcase_sample.csv", { type: "text/csv" });
-      const formData = new FormData();
-      formData.append("file", file);
-      const ingestRes = await fetch("/api/ingest", { method: "POST", body: formData });
-      const data = await ingestRes.json();
-      if (data.success) {
-        setUploadProgress("Updating ledger…");
-        setTxList((prev) => [...data.transactions, ...prev]);
-      } else {
-        alert("Error loading demo: " + data.error);
-      }
-    } catch { alert("Error loading demo data"); }
-    finally { setIsUploading(false); setUploadProgress(""); }
-  };
-
   const handleDeleteAll = async () => {
     setDeleteConfirmOpen(false);
+    if (isGuest) { setTxList([]); return; }
     setIsLoading(true);
     const { error: deleteError } = await supabase
       .from("transactions").delete().eq("user_id", user.id);
@@ -311,7 +476,7 @@ export default function Home() {
     setIsLoading(false);
   };
 
-  // ── Derived data ────────────────────────────────────────────────────────
+  // ── Derived data ──────────────────────────────────────────────────────────
 
   const currentMonthStats = useMemo(() => {
     if (!txList.length) return { income: 0, spending: 0, net: 0, label: "", month: "" };
@@ -343,21 +508,16 @@ export default function Home() {
 
   const recentTxns = useMemo(() => txList.slice(0, 5), [txList]);
 
-  const totalIncome   = useMemo(() => txList.filter(t => Number(t.amount) > 0).reduce((s, t) => s + Number(t.amount), 0), [txList]);
-  const totalSpending = useMemo(() => Math.abs(txList.filter(t => Number(t.amount) < 0).reduce((s, t) => s + Number(t.amount), 0)), [txList]);
-
-  // Coverage ring inputs
-  const now = new Date();
-  const dayOfMonth   = now.getDate();
-  const daysInMonth  = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const available    = currentMonthStats.income - currentMonthStats.spending;
-  const dailyBudget  = currentMonthStats.income > 0 ? available / Math.max(daysInMonth - dayOfMonth, 1) : 0;
+  const now         = new Date();
+  const dayOfMonth  = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const available   = currentMonthStats.income - currentMonthStats.spending;
+  const dailyBudget = currentMonthStats.income > 0 ? available / Math.max(daysInMonth - dayOfMonth, 1) : 0;
 
   let coverageStatus = "on-track";
   if (currentMonthStats.spending > currentMonthStats.income) coverageStatus = "over";
   else if (currentMonthStats.income > 0 && currentMonthStats.spending > currentMonthStats.income * 0.85) coverageStatus = "watch";
 
-  // Narrative observation for home card
   const observation = useMemo(() => {
     if (!topCategories.length) return null;
     const top = topCategories[0];
@@ -369,15 +529,14 @@ export default function Home() {
     };
   }, [topCategories, currentMonthStats]);
 
-  // ── Loading ──────────────────────────────────────────────────────────────
+  // ── States: landing / loading ─────────────────────────────────────────────
 
   if (isLoading) {
     return (
       <div style={{
         display: "flex", height: "100dvh", width: "100%",
         alignItems: "center", justifyContent: "center",
-        background: "var(--ax-midnight)",
-        flexDirection: "column", gap: 20,
+        background: "var(--ax-midnight)", flexDirection: "column", gap: 20,
       }}>
         <svg viewBox="0 0 24 24" width="32" height="32" style={{ animation: "spin 1s linear infinite" }}>
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
@@ -391,11 +550,46 @@ export default function Home() {
     );
   }
 
-  // ── Layout ───────────────────────────────────────────────────────────────
+  if (appMode === "landing") {
+    return <LandingScreen onExplore={enterGuestMode} onSignIn={() => router.push("/login")} />;
+  }
+
+  // ── Main app layout ───────────────────────────────────────────────────────
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100dvh", width: "100%", overflow: "hidden", background: "var(--ax-midnight)" }}>
-      {/* ── Top bar ── */}
+
+      {/* Guest banner */}
+      {isGuest && !guestBannerDismissed && (
+        <div style={{
+          background: "linear-gradient(90deg, rgba(201,165,90,0.12) 0%, rgba(201,165,90,0.06) 100%)",
+          borderBottom: "1px solid var(--ax-border-gold-soft)",
+          padding: "9px 16px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 11, color: "var(--ax-fg-muted)", letterSpacing: "0.06em" }}>
+            Exploring in guest mode — your data won't be saved.
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button onClick={() => router.push("/login")} style={{
+              background: "transparent", border: "none",
+              color: "var(--ax-gold)", cursor: "pointer",
+              fontFamily: "var(--ax-font-body)", fontSize: 11,
+              fontWeight: 500, letterSpacing: "0.14em",
+              textTransform: "uppercase", padding: 0,
+            }}>
+              Sign in
+            </button>
+            <button onClick={() => setGuestBannerDismissed(true)} style={{
+              background: "transparent", border: "none",
+              color: "var(--ax-fg-faint)", cursor: "pointer", padding: 0, fontSize: 16, lineHeight: 1,
+            }}>×</button>
+          </div>
+        </div>
+      )}
+
+      {/* Top bar */}
       <header style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 20px", height: 56, flexShrink: 0,
@@ -403,69 +597,62 @@ export default function Home() {
         background: "var(--ax-midnight)",
         position: "relative", zIndex: 20,
       }}>
-        {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <AxyFolioWordmark />
-        </div>
+        <AxyFolioWordmark />
 
-        {/* Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <input type="file" style={{ display: "none" }} ref={fileInputRef} onChange={handleFileUpload} accept=".csv" />
 
-          {txList.length === 0 && (
-            <button onClick={loadDemoData} disabled={isUploading}
-              style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "8px 14px", borderRadius: "var(--ax-radius-2)",
-                background: "transparent",
-                border: "1px solid var(--ax-border-strong)",
-                color: "var(--ax-fg-muted)",
-                fontFamily: "var(--ax-font-body)", fontSize: 11,
-                letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 500,
-                cursor: "pointer",
-              }}>
-              <Sparkles size={13} style={{ color: "var(--ax-gold)" }} />
-              Demo
-            </button>
-          )}
-
-          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading}
-            style={{
+          {isGuest ? (
+            <button onClick={() => router.push("/login")} style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "8px 16px", borderRadius: "var(--ax-radius-2)",
-              background: "var(--ax-gold)",
-              border: "none",
+              background: "var(--ax-gold)", border: "none",
               color: "var(--ax-midnight)",
               fontFamily: "var(--ax-font-body)", fontSize: 11,
               letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 600,
               cursor: "pointer",
-              transition: "background var(--ax-dur-fast) var(--ax-ease)",
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = "var(--ax-gold-bright)"}
-            onMouseLeave={e => e.currentTarget.style.background = "var(--ax-gold)"}>
-            <Upload size={13} />
-            <span>{isUploading ? uploadProgress || "…" : "Import"}</span>
-          </button>
-
-          {/* User avatar / sign out */}
-          <button onClick={async () => {
-            const { error } = await supabase.auth.signOut();
-            if (!error) { setUser(null); router.push("/login"); }
-          }}
-            style={{
-              width: 32, height: 32, borderRadius: "50%",
-              border: "1px solid var(--ax-border-gold)",
-              background: "linear-gradient(135deg, #1a1612 0%, #2a2218 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: "var(--ax-font-display)", fontSize: 13, color: "var(--ax-gold)",
-              cursor: "pointer",
             }}>
-            {user?.email?.[0]?.toUpperCase() || "U"}
-          </button>
+              <LogIn size={13} /> Sign in
+            </button>
+          ) : (
+            <>
+              <button onClick={() => fileInputRef.current?.click()} disabled={isUploading}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "8px 16px", borderRadius: "var(--ax-radius-2)",
+                  background: "var(--ax-gold)", border: "none",
+                  color: "var(--ax-midnight)",
+                  fontFamily: "var(--ax-font-body)", fontSize: 11,
+                  letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "background var(--ax-dur-fast) var(--ax-ease)",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--ax-gold-bright)"}
+                onMouseLeave={e => e.currentTarget.style.background = "var(--ax-gold)"}>
+                <Upload size={13} />
+                <span>{isUploading ? uploadProgress || "…" : "Import"}</span>
+              </button>
+
+              <button onClick={async () => {
+                const { error } = await supabase.auth.signOut();
+                if (!error) { setUser(null); router.push("/login"); }
+              }}
+                style={{
+                  width: 32, height: 32, borderRadius: "50%",
+                  border: "1px solid var(--ax-border-gold)",
+                  background: "linear-gradient(135deg, #1a1612 0%, #2a2218 100%)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontFamily: "var(--ax-font-display)", fontSize: 13, color: "var(--ax-gold)",
+                  cursor: "pointer",
+                }}>
+                {user?.email?.[0]?.toUpperCase() || "U"}
+              </button>
+            </>
+          )}
         </div>
       </header>
 
-      {/* ── Tab content ── */}
+      {/* Tab content */}
       <main style={{ flex: 1, overflowY: "auto", overflowX: "hidden", paddingBottom: 88 }} className="scroll-thin">
 
         {/* DASHBOARD */}
@@ -487,23 +674,30 @@ export default function Home() {
 
             {/* Coverage hero card */}
             <div style={{ padding: "16px 20px 0" }}>
-              <div className="ax-card-midnight" style={{ padding: "22px 20px 20px", position: "relative", overflow: "hidden" }}>
-                {/* Halftone accent */}
+              <div style={{
+                borderRadius: "var(--ax-radius-2)", padding: "22px 20px 20px",
+                position: "relative", overflow: "hidden",
+                background: "linear-gradient(145deg, #0A0908 0%, #1A1512 40%, #120F0C 100%)",
+                border: "1px solid var(--ax-border-gold-soft)",
+                boxShadow: "0 0 60px rgba(201,165,90,0.08) inset",
+              }}>
+                {/* Gold glow top */}
+                <div style={{
+                  position: "absolute", top: -60, left: "50%", transform: "translateX(-50%)",
+                  width: 300, height: 120,
+                  background: "radial-gradient(ellipse at center, rgba(201,165,90,0.18) 0%, transparent 70%)",
+                  pointerEvents: "none",
+                }} />
                 <div className="ax-halftone" style={{ top: -20, right: -20, width: 160, height: 160, opacity: 0.35 }} />
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                  <Eyebrow num={1} label={currentMonthStats.label || "May · Coverage"} />
+                  <Eyebrow num={1} label={currentMonthStats.label || "Coverage"} />
                   <HealthPill status={coverageStatus} />
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-                  <CoverageRing
-                    size={150}
-                    income={currentMonthStats.income}
-                    spent={currentMonthStats.spending}
-                    dayOfMonth={dayOfMonth}
-                    daysInMonth={daysInMonth}
-                  />
+                  <CoverageRing size={150} income={currentMonthStats.income} spent={currentMonthStats.spending}
+                    dayOfMonth={dayOfMonth} daysInMonth={daysInMonth} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 9, letterSpacing: "0.32em", color: "var(--ax-fg-muted)", textTransform: "uppercase", fontWeight: 500 }}>
                       Available
@@ -513,11 +707,13 @@ export default function Home() {
                       letterSpacing: "-0.02em", lineHeight: 1, marginTop: 4,
                       color: available >= 0 ? "var(--ax-fg)" : "var(--ax-error)",
                     }}>
-                      {txList.length === 0 ? "—" : fmt(Math.abs(available), currency)}
+                      {txList.length === 0 ? "—" : <Amt value={Math.abs(available)} currency={currency} />}
                     </div>
                     <div style={{ fontSize: 12, color: "var(--ax-fg-muted)", marginTop: 6, lineHeight: 1.4 }}>
                       {txList.length === 0 ? "Import a CSV to begin" : (
-                        <>of <span style={{ color: "var(--ax-fg)", fontFamily: "var(--ax-font-display)" }}>{fmt(currentMonthStats.income, currency)}</span> income</>
+                        <span>of <span style={{ color: "var(--ax-fg)", fontFamily: "var(--ax-font-display)" }}>
+                          <Amt value={currentMonthStats.income} currency={currency} />
+                        </span> income</span>
                       )}
                     </div>
                     {txList.length > 0 && (
@@ -527,7 +723,9 @@ export default function Home() {
                           <span style={{
                             fontFamily: "var(--ax-font-display)", fontSize: 20,
                             fontStyle: "italic", fontWeight: 400, color: "var(--ax-gold)",
-                          }}>{fmt(Math.max(dailyBudget, 0), currency)}</span>
+                          }}>
+                            <Amt value={Math.max(dailyBudget, 0)} currency={currency} />
+                          </span>
                           <span style={{ fontSize: 10, letterSpacing: "0.18em", color: "var(--ax-fg-muted)", textTransform: "uppercase" }}>
                             / day · {daysInMonth - dayOfMonth}d left
                           </span>
@@ -537,17 +735,15 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Stats row */}
                 {txList.length > 0 && (
                   <div style={{
-                    marginTop: 20, paddingTop: 16,
-                    borderTop: "1px solid var(--ax-border)",
+                    marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--ax-border)",
                     display: "grid", gridTemplateColumns: "1fr 1px 1fr 1px 1fr",
                     gap: 12, alignItems: "center",
                   }}>
-                    <StatBlock label="Spent" value={fmt(currentMonthStats.spending, currency)} />
+                    <StatBlock label="Spent" value={<Amt value={currentMonthStats.spending} currency={currency} />} />
                     <span style={{ height: 28, background: "var(--ax-border)" }} />
-                    <StatBlock label="Saved" value={fmt(Math.max(currentMonthStats.net, 0), currency)} gold />
+                    <StatBlock label="Saved" value={<Amt value={Math.max(currentMonthStats.net, 0)} currency={currency} />} gold />
                     <span style={{ height: 28, background: "var(--ax-border)" }} />
                     <StatBlock label="Day" value={`${dayOfMonth}/${daysInMonth}`} />
                   </div>
@@ -558,14 +754,17 @@ export default function Home() {
             {/* Narrative observation */}
             {observation && (
               <div style={{ padding: "14px 20px 0" }}>
-                <div className="ax-card-midnight" style={{
+                <div style={{
                   padding: "16px 18px", position: "relative", cursor: "pointer",
+                  background: "linear-gradient(135deg, rgba(201,165,90,0.06) 0%, rgba(201,165,90,0.02) 100%)",
+                  border: "1px solid var(--ax-border-gold-soft)",
+                  borderRadius: "var(--ax-radius-2)",
+                  transition: "border-color 220ms var(--ax-ease)",
                 }}
-                onClick={() => changeTab(TABS.INSIGHTS)}>
-                  <div style={{
-                    position: "absolute", left: 0, top: 16, bottom: 16,
-                    width: 2, background: "var(--ax-gold)",
-                  }} />
+                onClick={() => changeTab(TABS.INSIGHTS)}
+                onMouseEnter={e => e.currentTarget.style.borderColor = "var(--ax-border-gold)"}
+                onMouseLeave={e => e.currentTarget.style.borderColor = "var(--ax-border-gold-soft)"}>
+                  <div style={{ position: "absolute", left: 0, top: 16, bottom: 16, width: 2, background: "var(--ax-gold)", borderRadius: 2 }} />
                   <div style={{ fontSize: 10, letterSpacing: "0.32em", color: "var(--ax-gold)", textTransform: "uppercase", fontWeight: 500 }}>
                     Observation · {currentMonthStats.label}
                   </div>
@@ -573,9 +772,10 @@ export default function Home() {
                     fontFamily: "var(--ax-font-display)", fontSize: 17, fontWeight: 300,
                     marginTop: 6, lineHeight: 1.35, color: "var(--ax-fg)",
                   }}>
-                    <span style={{ fontStyle: "italic", color: "var(--ax-fg-muted)" }}>{observation.category}</span> accounts for{" "}
+                    <span style={{ fontStyle: "italic", color: "var(--ax-fg-muted)" }}>{observation.category}</span>{" "}
+                    accounts for{" "}
                     <span style={{ color: observation.pct > 40 ? "var(--ax-error)" : "var(--ax-gold)", fontStyle: "italic" }}>{observation.pct}%</span>{" "}
-                    of this month's spend — {fmt(observation.amount, currency)} total.
+                    of this month's spend.
                   </div>
                   <div style={{
                     marginTop: 10, fontSize: 11, letterSpacing: "0.18em",
@@ -602,7 +802,10 @@ export default function Home() {
                     Budgets <IconChevR />
                   </button>
                 </div>
-                <div className="ax-card-midnight" style={{ overflow: "hidden" }}>
+                <div style={{
+                  background: "linear-gradient(180deg, rgba(26,24,21,0.95) 0%, rgba(10,9,8,0.98) 100%)",
+                  border: "1px solid var(--ax-border)", borderRadius: "var(--ax-radius-2)", overflow: "hidden",
+                }}>
                   {topCategories.map((cat, i) => {
                     const cfg = getCategoryConfig(cat.name);
                     const pct = currentMonthStats.spending > 0 ? (cat.amount / currentMonthStats.spending) * 100 : 0;
@@ -617,7 +820,7 @@ export default function Home() {
                             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
                               <span style={{ fontSize: 13, color: "var(--ax-fg)" }}>{cat.name}</span>
                               <span style={{ fontFamily: "var(--ax-font-display)", fontSize: 14, color: "var(--ax-fg)", fontWeight: 400 }}>
-                                {fmt(cat.amount, currency)}
+                                <Amt value={cat.amount} currency={currency} />
                               </span>
                             </div>
                           </div>
@@ -625,7 +828,7 @@ export default function Home() {
                         <div style={{ width: "100%", height: 2, borderRadius: 2, background: "var(--ax-border)", overflow: "hidden" }}>
                           <div style={{
                             width: `${Math.min(pct, 100)}%`, height: "100%",
-                            background: cfg.color || "var(--ax-gold)",
+                            background: `linear-gradient(90deg, ${cfg.color || "var(--ax-gold)"} 0%, ${cfg.color || "var(--ax-gold)"}bb 100%)`,
                             transition: "width 600ms var(--ax-ease)",
                           }} />
                         </div>
@@ -650,14 +853,13 @@ export default function Home() {
                     All · {txList.length} <IconChevR />
                   </button>
                 </div>
-                <div className="ax-card-midnight" style={{ overflow: "hidden" }}>
+                <div style={{
+                  background: "linear-gradient(180deg, rgba(26,24,21,0.95) 0%, rgba(10,9,8,0.98) 100%)",
+                  border: "1px solid var(--ax-border)", borderRadius: "var(--ax-radius-2)", overflow: "hidden",
+                }}>
                   {recentTxns.map((tx, i) => (
                     <TxnRow key={tx.id} tx={tx} isLast={i === recentTxns.length - 1} currency={currency}
-                      onClick={() => setSelectedInsight({
-                        type: "category", title: tx.category,
-                        transactions: [tx], isIncome: Number(tx.amount) > 0,
-                      })}
-                    />
+                      onClick={() => setSelectedInsight({ type: "category", title: tx.category, transactions: [tx], isIncome: Number(tx.amount) > 0 })} />
                   ))}
                 </div>
               </div>
@@ -666,67 +868,54 @@ export default function Home() {
             {/* Empty state */}
             {txList.length === 0 && (
               <div style={{ padding: "48px 24px", textAlign: "center" }}>
-                <div style={{
-                  fontFamily: "var(--ax-font-display)", fontSize: 28, fontWeight: 300,
-                  color: "var(--ax-fg)", marginBottom: 8,
-                }}>
+                <div style={{ fontFamily: "var(--ax-font-display)", fontSize: 28, fontWeight: 300, color: "var(--ax-fg)", marginBottom: 8 }}>
                   Your ledger awaits.
                 </div>
                 <div style={{ fontSize: 14, color: "var(--ax-fg-muted)", marginBottom: 24, lineHeight: 1.6 }}>
-                  Import a bank statement CSV to see<br />your complete financial picture.
+                  Import a bank statement CSV to see your complete financial picture.
                 </div>
-                <button onClick={() => fileInputRef.current?.click()} style={{
-                  padding: "14px 28px", borderRadius: "var(--ax-radius-2)",
-                  background: "var(--ax-gold)", border: "none",
-                  color: "var(--ax-midnight)",
-                  fontFamily: "var(--ax-font-body)", fontSize: 11,
-                  letterSpacing: "0.28em", textTransform: "uppercase", fontWeight: 600,
-                  cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
-                }}>
-                  <Plus size={14} />
-                  Upload Statement
-                </button>
-                <div style={{ marginTop: 14 }}>
-                  <button onClick={loadDemoData} style={{
-                    background: "transparent", border: "none",
-                    color: "var(--ax-fg-muted)", fontFamily: "var(--ax-font-body)",
-                    fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
-                    cursor: "pointer", fontWeight: 500,
+                {!isGuest && (
+                  <button onClick={() => fileInputRef.current?.click()} style={{
+                    padding: "14px 28px", borderRadius: "var(--ax-radius-2)",
+                    background: "var(--ax-gold)", border: "none", color: "var(--ax-midnight)",
+                    fontFamily: "var(--ax-font-body)", fontSize: 11,
+                    letterSpacing: "0.28em", textTransform: "uppercase", fontWeight: 600,
+                    cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
                   }}>
-                    or try the demo
+                    <Plus size={14} /> Upload Statement
                   </button>
-                </div>
+                )}
               </div>
             )}
           </div>
         )}
 
-        {/* TRANSACTIONS */}
         {activeTab === TABS.TRANSACTIONS && (
           <TransactionsTab txList={txList} currency={currency} />
         )}
-
-        {/* BUDGET */}
         {activeTab === TABS.BUDGET && (
           <BudgetTab txList={txList} currency={currency} userId={user?.id} />
         )}
-
-        {/* INSIGHTS */}
         {activeTab === TABS.INSIGHTS && (
-          <InsightsTab
-            txList={txList}
-            currency={currency}
-            onCategoryClick={setSelectedInsight}
-            userId={user?.id}
-          />
+          <InsightsTab txList={txList} currency={currency} onCategoryClick={setSelectedInsight} userId={user?.id} />
         )}
 
         {/* SETTINGS */}
         {activeTab === TABS.SETTINGS && (
           <div style={{ padding: "24px 20px", animation: "slide-up 0.42s cubic-bezier(0.22,1,0.36,1) forwards" }}>
 
-            {/* Profile card */}
-            <div className="ax-card-midnight" style={{ padding: "20px", marginBottom: 20, position: "relative", overflow: "hidden" }}>
+            {/* Profile / guest card */}
+            <div style={{
+              borderRadius: "var(--ax-radius-2)", padding: "20px",
+              marginBottom: 20, position: "relative", overflow: "hidden",
+              background: "linear-gradient(135deg, #0A0908 0%, #1A1512 60%, #120F0C 100%)",
+              border: "1px solid var(--ax-border-gold-soft)",
+            }}>
+              <div style={{
+                position: "absolute", top: -40, right: -40, width: 160, height: 160,
+                background: "radial-gradient(ellipse at center, rgba(201,165,90,0.12) 0%, transparent 70%)",
+                pointerEvents: "none",
+              }} />
               <div className="ax-halftone" style={{ top: -20, right: -20, width: 140, height: 140, opacity: 0.3 }} />
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <div style={{
@@ -736,63 +925,80 @@ export default function Home() {
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontFamily: "var(--ax-font-display)", fontSize: 18, color: "var(--ax-gold)",
                 }}>
-                  {user?.email?.[0]?.toUpperCase() || "U"}
+                  {isGuest ? "G" : (user?.email?.[0]?.toUpperCase() || "U")}
                 </div>
                 <div>
                   <div style={{ fontFamily: "var(--ax-font-display)", fontSize: 18, fontWeight: 300, color: "var(--ax-fg)" }}>
-                    {user?.email || "Account"}
+                    {isGuest ? "Guest explorer" : (user?.email || "Account")}
                   </div>
-                  <div style={{
-                    marginTop: 6, fontSize: 10, letterSpacing: "0.28em",
-                    color: "var(--ax-gold)", textTransform: "uppercase", fontWeight: 500,
-                  }}>
-                    {txList.length} transactions · {[...new Set(txList.map(t => t.date.slice(0, 7)))].length} months
+                  <div style={{ marginTop: 6, fontSize: 10, letterSpacing: "0.28em", color: "var(--ax-gold)", textTransform: "uppercase", fontWeight: 500 }}>
+                    {isGuest ? "Demo mode · data not saved" : `${txList.length} transactions · ${[...new Set(txList.map(t => t.date.slice(0, 7)))].length} months`}
                   </div>
                 </div>
               </div>
-            </div>
-
-            <Eyebrow num={1} label="Import" />
-            <div className="ax-card-midnight" style={{ padding: 18, marginTop: 14, marginBottom: 20, position: "relative", overflow: "hidden" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: "var(--ax-radius-2)",
-                  background: "rgba(201,165,90,0.08)",
-                  border: "1px solid var(--ax-border-gold-soft)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "var(--ax-gold)",
-                }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
-                    <path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6z" />
-                    <path d="M14 3v6h6M9 13h6M9 17h6" strokeLinecap="round" />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontFamily: "var(--ax-font-display)", fontSize: 16, fontWeight: 400, color: "var(--ax-fg)" }}>
-                    Bank statement (CSV)
-                  </div>
-                  <div style={{ fontSize: 11, color: "var(--ax-fg-muted)", marginTop: 2 }}>
-                    {txList.length > 0 ? `${txList.length} transactions imported` : "No data yet"}
-                  </div>
-                </div>
-              </div>
-              <button onClick={() => fileInputRef.current?.click()} disabled={isUploading}
-                style={{
-                  width: "100%", padding: "13px",
-                  background: isUploading ? "rgba(201,165,90,0.5)" : "var(--ax-gold)",
-                  border: "none", color: "var(--ax-midnight)",
-                  borderRadius: "var(--ax-radius-2)", cursor: "pointer",
+              {isGuest && (
+                <button onClick={() => router.push("/login")} style={{
+                  marginTop: 16, width: "100%", padding: "12px",
+                  background: "var(--ax-gold)", border: "none",
+                  borderRadius: "var(--ax-radius-2)", color: "var(--ax-midnight)",
                   fontFamily: "var(--ax-font-body)", fontSize: 11,
-                  letterSpacing: "0.28em", textTransform: "uppercase", fontWeight: 600,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  letterSpacing: "0.22em", textTransform: "uppercase", fontWeight: 600,
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 }}>
-                <Upload size={13} />
-                {isUploading ? uploadProgress || "Importing…" : "Upload statement"}
-              </button>
+                  <LogIn size={13} /> Sign in to save your data
+                </button>
+              )}
             </div>
 
-            <Eyebrow num={2} label="Currency" />
-            <div className="ax-card-midnight" style={{ overflow: "hidden", marginTop: 14, marginBottom: 20 }}>
+            {!isGuest && (
+              <>
+                <Eyebrow num={1} label="Import" />
+                <div style={{
+                  borderRadius: "var(--ax-radius-2)", padding: 18,
+                  marginTop: 14, marginBottom: 20,
+                  background: "linear-gradient(180deg, rgba(26,24,21,0.95) 0%, rgba(10,9,8,0.98) 100%)",
+                  border: "1px solid var(--ax-border)",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+                    <div style={{
+                      width: 40, height: 40, borderRadius: "var(--ax-radius-2)",
+                      background: "rgba(201,165,90,0.08)", border: "1px solid var(--ax-border-gold-soft)",
+                      display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ax-gold)",
+                    }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round">
+                        <path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9l-6-6z" />
+                        <path d="M14 3v6h6M9 13h6M9 17h6" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: "var(--ax-font-display)", fontSize: 16, fontWeight: 400, color: "var(--ax-fg)" }}>Bank statement (CSV)</div>
+                      <div style={{ fontSize: 11, color: "var(--ax-fg-muted)", marginTop: 2 }}>
+                        {txList.length > 0 ? `${txList.length} transactions imported` : "No data yet"}
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} style={{
+                    width: "100%", padding: "13px",
+                    background: isUploading ? "rgba(201,165,90,0.5)" : "var(--ax-gold)",
+                    border: "none", color: "var(--ax-midnight)",
+                    borderRadius: "var(--ax-radius-2)", cursor: "pointer",
+                    fontFamily: "var(--ax-font-body)", fontSize: 11,
+                    letterSpacing: "0.28em", textTransform: "uppercase", fontWeight: 600,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  }}>
+                    <Upload size={13} />
+                    {isUploading ? uploadProgress || "Importing…" : "Upload statement"}
+                  </button>
+                </div>
+              </>
+            )}
+
+            <Eyebrow num={isGuest ? 1 : 2} label="Currency" />
+            <div style={{
+              overflow: "hidden", marginTop: 14, marginBottom: 20,
+              background: "linear-gradient(180deg, rgba(26,24,21,0.95) 0%, rgba(10,9,8,0.98) 100%)",
+              border: "1px solid var(--ax-border)", borderRadius: "var(--ax-radius-2)",
+            }}>
               {["AED", "USD"].map((c, i) => (
                 <div key={c} onClick={() => setCurrency(c)} style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -802,17 +1008,22 @@ export default function Home() {
                   transition: "background 220ms var(--ax-ease)",
                 }}>
                   <div style={{ fontSize: 14, color: "var(--ax-fg)" }}>
-                    {c === "AED" ? "UAE Dirham (Đ)" : "US Dollar ($)"}
+                    {c === "AED" ? "UAE Dirham" : "US Dollar ($)"}
                   </div>
-                  {currency === c && (
-                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--ax-gold)" }} />
-                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {c === "AED" && <DirhamSvg style={{ color: currency === c ? "var(--ax-gold)" : "var(--ax-fg-muted)" }} />}
+                    {currency === c && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--ax-gold)" }} />}
+                  </div>
                 </div>
               ))}
             </div>
 
-            <Eyebrow num={3} label="Data" />
-            <div className="ax-card-midnight" style={{ overflow: "hidden", marginTop: 14 }}>
+            <Eyebrow num={isGuest ? 2 : 3} label="Data" />
+            <div style={{
+              overflow: "hidden", marginTop: 14,
+              background: "linear-gradient(180deg, rgba(26,24,21,0.95) 0%, rgba(10,9,8,0.98) 100%)",
+              border: "1px solid var(--ax-border)", borderRadius: "var(--ax-radius-2)",
+            }}>
               {txList.length > 0 && (
                 <div onClick={() => setDeleteConfirmOpen(true)} style={{
                   padding: "14px 16px", cursor: "pointer",
@@ -823,35 +1034,48 @@ export default function Home() {
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(217,119,87,0.06)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   <div style={{ fontSize: 14, color: "var(--ax-error)" }}>Clear all transactions</div>
-                  <Trash2 size={14} style={{ color: "var(--ax-error)" }} />
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--ax-error)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+                  </svg>
                 </div>
               )}
-              <div onClick={async () => {
-                const { error } = await supabase.auth.signOut();
-                if (!error) { setUser(null); router.push("/login"); }
-              }} style={{
-                padding: "14px 16px", cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                transition: "background 220ms var(--ax-ease)",
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(245,243,239,0.03)"}
-              onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                <div style={{ fontSize: 14, color: "var(--ax-fg-muted)" }}>Sign out</div>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--ax-fg-muted)" strokeWidth="1.5" strokeLinecap="round">
-                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
-                </svg>
-              </div>
+              {isGuest ? (
+                <div onClick={() => { setAppMode("landing"); setTxList([]); }} style={{
+                  padding: "14px 16px", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  transition: "background 220ms var(--ax-ease)",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(245,243,239,0.03)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <div style={{ fontSize: 14, color: "var(--ax-fg-muted)" }}>Exit guest mode</div>
+                </div>
+              ) : (
+                <div onClick={async () => {
+                  const { error } = await supabase.auth.signOut();
+                  if (!error) { setUser(null); router.push("/login"); }
+                }} style={{
+                  padding: "14px 16px", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  transition: "background 220ms var(--ax-ease)",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(245,243,239,0.03)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <div style={{ fontSize: 14, color: "var(--ax-fg-muted)" }}>Sign out</div>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--ax-fg-muted)" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+                  </svg>
+                </div>
+              )}
             </div>
           </div>
         )}
       </main>
 
-      {/* ── Bottom navigation ── */}
+      {/* Bottom navigation */}
       <nav style={{
         position: "fixed", bottom: 16, left: 12, right: 12,
-        background: "rgba(10,9,8,0.96)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        background: "rgba(10,9,8,0.97)",
+        backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
         borderRadius: 28,
         border: "1px solid var(--ax-border-strong)",
         boxShadow: "0 8px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(201,165,90,0.06) inset",
@@ -870,13 +1094,11 @@ export default function Home() {
               padding: "6px 10px", borderRadius: 18,
               background: "transparent", border: "none",
               color: activeTab === tab ? "var(--ax-gold)" : "var(--ax-fg-muted)",
-              cursor: "pointer",
-              transition: "color var(--ax-dur-fast) var(--ax-ease)",
+              cursor: "pointer", transition: "color var(--ax-dur-fast) var(--ax-ease)",
             }}>
               {icon}
               <span style={{
-                fontSize: 9, fontWeight: 500, letterSpacing: "0.12em",
-                textTransform: "uppercase",
+                fontSize: 9, fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase",
                 color: activeTab === tab ? "var(--ax-gold)" : "var(--ax-fg-faint)",
               }}>{label}</span>
             </button>
@@ -884,13 +1106,10 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* ── Chat widget ── */}
       <ChatWidget txList={txList} currency={currency} />
-
-      {/* ── Insight modal ── */}
       <InsightModal insight={selectedInsight} onClose={() => setSelectedInsight(null)} currency={currency} />
 
-      {/* ── Delete confirm modal ── */}
+      {/* Delete confirm modal */}
       {deleteConfirmOpen && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 100,
@@ -899,10 +1118,9 @@ export default function Home() {
           animation: "fade-in 220ms var(--ax-ease)",
         }}>
           <div style={{
-            background: "var(--ax-card)", width: "100%", maxWidth: 360,
-            borderRadius: "var(--ax-radius-2)",
-            border: "1px solid var(--ax-border-gold-soft)",
-            padding: 24,
+            background: "linear-gradient(145deg, #1A1815 0%, #0A0908 100%)",
+            width: "100%", maxWidth: 360, borderRadius: "var(--ax-radius-2)",
+            border: "1px solid var(--ax-border-gold-soft)", padding: 24,
             animation: "zoom-in 320ms var(--ax-ease)",
           }}>
             <div style={{ fontFamily: "var(--ax-font-display)", fontSize: 20, fontWeight: 400, marginBottom: 8, color: "var(--ax-fg)" }}>
@@ -913,23 +1131,17 @@ export default function Home() {
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setDeleteConfirmOpen(false)} style={{
-                flex: 1, padding: "12px",
-                background: "transparent", border: "1px solid var(--ax-border-strong)",
-                color: "var(--ax-fg-muted)", borderRadius: "var(--ax-radius-2)",
-                fontFamily: "var(--ax-font-body)", fontSize: 11,
+                flex: 1, padding: "12px", background: "transparent",
+                border: "1px solid var(--ax-border-strong)", color: "var(--ax-fg-muted)",
+                borderRadius: "var(--ax-radius-2)", fontFamily: "var(--ax-font-body)", fontSize: 11,
                 letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 500, cursor: "pointer",
-              }}>
-                Cancel
-              </button>
+              }}>Cancel</button>
               <button onClick={handleDeleteAll} style={{
-                flex: 1, padding: "12px",
-                background: "var(--ax-error)", border: "none",
+                flex: 1, padding: "12px", background: "var(--ax-error)", border: "none",
                 color: "var(--ax-parchment)", borderRadius: "var(--ax-radius-2)",
                 fontFamily: "var(--ax-font-body)", fontSize: 11,
                 letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 600, cursor: "pointer",
-              }}>
-                Delete All
-              </button>
+              }}>Delete All</button>
             </div>
           </div>
         </div>
@@ -950,6 +1162,7 @@ function StatBlock({ label, value, gold }) {
         fontFamily: "var(--ax-font-display)", fontSize: 17, fontWeight: 400,
         marginTop: 4, color: gold ? "var(--ax-gold)" : "var(--ax-fg)",
         fontStyle: gold ? "italic" : "normal",
+        display: "flex", alignItems: "center",
       }}>
         {value}
       </div>
@@ -957,7 +1170,7 @@ function StatBlock({ label, value, gold }) {
   );
 }
 
-// ── InsightModal ───────────────────────────────────────────────────────────
+// ── InsightModal — centered, always in view ────────────────────────────────
 
 function InsightModal({ insight, onClose, currency }) {
   const [drillStack, setDrillStack] = useState([]);
@@ -978,12 +1191,11 @@ function InsightModal({ insight, onClose, currency }) {
 
   if (!insight || drillStack.length === 0) return null;
 
-  const currentView  = drillStack[drillStack.length - 1];
-  const txs          = currentView.transactions || [];
-  const totalAmount  = txs.reduce((sum, tx) => sum + Math.abs(Number(tx.amount)), 0);
+  const currentView = drillStack[drillStack.length - 1];
+  const txs         = currentView.transactions || [];
+  const totalAmount = txs.reduce((sum, tx) => sum + Math.abs(Number(tx.amount)), 0);
 
-  const formatAmt = (amt) => fmtFull(amt, currency);
-  const formatDt  = (dateStr) => {
+  const formatDt = (dateStr) => {
     if (!dateStr) return "";
     const d = parseLocalDate(dateStr);
     return `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
@@ -994,7 +1206,7 @@ function InsightModal({ insight, onClose, currency }) {
     const groups = {};
     txs.forEach((tx) => {
       let key;
-      if (currentView.mode === "category")    key = getParentCategory(tx.category) || "Uncategorized";
+      if (currentView.mode === "category")         key = getParentCategory(tx.category) || "Uncategorized";
       else if (currentView.mode === "subcategory") key = tx.category || "Uncategorized";
       else key = parseLocalDate(tx.date).toLocaleString("en-US", { month: "long", year: "numeric" });
       if (!groups[key]) groups[key] = { name: key, amount: 0, transactions: [] };
@@ -1029,35 +1241,35 @@ function InsightModal({ insight, onClose, currency }) {
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 100,
-      display: "flex", alignItems: "flex-end", justifyContent: "center",
-      background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "20px 16px",
+      background: "rgba(0,0,0,0.72)", backdropFilter: "blur(8px)",
       animation: "fade-in 220ms var(--ax-ease)",
     }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{
-        background: "var(--ax-midnight)",
+        background: "linear-gradient(160deg, #1A1815 0%, #0A0908 100%)",
         border: "1px solid var(--ax-border-gold-soft)",
-        borderRadius: "12px 12px 0 0",
-        width: "100%", maxWidth: 480,
-        maxHeight: "88vh",
+        borderRadius: 8,
+        width: "100%", maxWidth: 440,
+        maxHeight: "80vh",
         display: "flex", flexDirection: "column",
-        animation: "slide-up-sheet 320ms cubic-bezier(0.22,1,0.36,1)",
+        animation: "zoom-in 320ms var(--ax-ease)",
         overflow: "hidden",
+        boxShadow: "0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(201,165,90,0.08) inset",
       }}>
-        {/* Drag handle */}
-        <div style={{ width: 40, height: 3, background: "var(--ax-border-strong)", borderRadius: 2, margin: "16px auto 0" }} />
+        {/* Gold top accent */}
+        <div style={{ height: 2, background: "linear-gradient(90deg, transparent 0%, var(--ax-gold) 30%, var(--ax-gold-bright) 50%, var(--ax-gold) 70%, transparent 100%)" }} />
 
         {/* Header */}
         <div style={{
-          padding: "16px 20px 14px",
-          borderBottom: "1px solid var(--ax-border)",
+          padding: "16px 20px 14px", borderBottom: "1px solid var(--ax-border)",
           display: "flex", alignItems: "flex-start", justifyContent: "space-between",
         }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {drillStack.length > 1 && (
                 <button onClick={() => setDrillStack(prev => prev.slice(0, -1))} style={{
-                  background: "transparent", border: "none", color: "var(--ax-fg-muted)",
-                  cursor: "pointer", padding: 0, display: "flex",
+                  background: "transparent", border: "none", color: "var(--ax-fg-muted)", cursor: "pointer", padding: 0, display: "flex",
                 }}>
                   <ArrowLeft size={18} />
                 </button>
@@ -1068,21 +1280,18 @@ function InsightModal({ insight, onClose, currency }) {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
               <span style={{
-                fontFamily: "var(--ax-font-display)", fontSize: 16,
-                fontStyle: "italic", fontWeight: 300,
+                fontFamily: "var(--ax-font-display)", fontSize: 16, fontStyle: "italic", fontWeight: 300,
                 color: currentView.isIncome ? "var(--ax-gold)" : "var(--ax-fg-muted)",
+                display: "inline-flex", alignItems: "center",
               }}>
-                {formatAmt(totalAmount)}
+                <AmtFull value={totalAmount} currency={currency} />
               </span>
               <span style={{ fontSize: 11, color: "var(--ax-fg-faint)" }}>
                 {txs.length} item{txs.length !== 1 ? "s" : ""}
               </span>
             </div>
           </div>
-          <button onClick={onClose} style={{
-            background: "transparent", border: "none",
-            color: "var(--ax-fg-muted)", cursor: "pointer",
-          }}>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "var(--ax-fg-muted)", cursor: "pointer" }}>
             <X size={20} />
           </button>
         </div>
@@ -1096,14 +1305,11 @@ function InsightModal({ insight, onClose, currency }) {
             }}>
               {["category", "month"].map(mode => (
                 <button key={mode} onClick={() => setSummaryMode(mode)} style={{
-                  flex: 1, padding: "10px",
-                  background: currentView.mode === mode ? "rgba(201,165,90,0.12)" : "transparent",
-                  border: "none",
-                  color: currentView.mode === mode ? "var(--ax-gold)" : "var(--ax-fg-muted)",
+                  flex: 1, padding: "10px", background: currentView.mode === mode ? "rgba(201,165,90,0.12)" : "transparent",
+                  border: "none", color: currentView.mode === mode ? "var(--ax-gold)" : "var(--ax-fg-muted)",
                   fontFamily: "var(--ax-font-body)", fontSize: 11,
                   letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 500,
-                  cursor: "pointer",
-                  borderRight: mode === "category" ? "1px solid var(--ax-border)" : "none",
+                  cursor: "pointer", borderRight: mode === "category" ? "1px solid var(--ax-border)" : "none",
                   transition: "all 220ms var(--ax-ease)",
                 }}>
                   By {mode}
@@ -1114,7 +1320,7 @@ function InsightModal({ insight, onClose, currency }) {
         )}
 
         {/* List */}
-        <div style={{ overflowY: "auto", flex: 1, padding: "12px 20px 32px" }} className="scroll-thin">
+        <div style={{ overflowY: "auto", flex: 1, padding: "12px 20px 24px" }} className="scroll-thin">
           {txs.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px 0", color: "var(--ax-fg-muted)", fontSize: 13 }}>
               No transactions found.
@@ -1128,29 +1334,28 @@ function InsightModal({ insight, onClose, currency }) {
                   return (
                     <div key={idx} onClick={() => handleGroupClick(item)} style={{
                       display: "flex", alignItems: "center", gap: 12,
-                      padding: "14px 16px", borderRadius: "var(--ax-radius-2)",
-                      background: "var(--ax-card)", border: "1px solid var(--ax-border)",
+                      padding: "13px 14px", borderRadius: "var(--ax-radius-2)",
+                      background: "rgba(26,24,21,0.6)", border: "1px solid var(--ax-border)",
                       cursor: "pointer", transition: "border-color 220ms var(--ax-ease)",
                     }}
                     onMouseEnter={e => e.currentTarget.style.borderColor = "var(--ax-border-gold-soft)"}
                     onMouseLeave={e => e.currentTarget.style.borderColor = "var(--ax-border)"}>
                       <div style={{
-                        width: 36, height: 36, borderRadius: "50%",
-                        background: "var(--ax-midnight)",
+                        width: 34, height: 34, borderRadius: "50%", background: "var(--ax-midnight)",
                         border: `1px solid ${cfg.color || "var(--ax-border-strong)"}55`,
                         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                       }}>
-                        <cfg.Icon size={16} style={{ color: cfg.color || "var(--ax-fg-muted)" }} />
+                        <cfg.Icon size={14} style={{ color: cfg.color || "var(--ax-fg-muted)" }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, color: "var(--ax-fg)", fontWeight: 400 }}>{item.name}</div>
+                        <div style={{ fontSize: 14, color: "var(--ax-fg)" }}>{item.name}</div>
                         <div style={{ fontSize: 11, color: "var(--ax-fg-muted)", marginTop: 2 }}>
                           {item.transactions.length} txn{item.transactions.length !== 1 ? "s" : ""}
                         </div>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ fontFamily: "var(--ax-font-display)", fontSize: 15, color: "var(--ax-fg)", fontWeight: 400 }}>
-                          {formatAmt(item.amount)}
+                        <div style={{ fontFamily: "var(--ax-font-display)", fontSize: 14, color: "var(--ax-fg)", display: "flex", alignItems: "center" }}>
+                          <AmtFull value={item.amount} currency={currency} />
                         </div>
                         <div style={{ fontSize: 10, color: "var(--ax-fg-muted)", marginTop: 2 }}>{pct}%</div>
                       </div>
@@ -1167,16 +1372,15 @@ function InsightModal({ insight, onClose, currency }) {
                   return (
                     <div key={tx.id} style={{
                       display: "flex", alignItems: "center", gap: 12,
-                      padding: "13px 16px", borderRadius: "var(--ax-radius-2)",
-                      background: "var(--ax-card)", border: "1px solid var(--ax-border)",
+                      padding: "12px 14px", borderRadius: "var(--ax-radius-2)",
+                      background: "rgba(26,24,21,0.6)", border: "1px solid var(--ax-border)",
                     }}>
                       <div style={{
-                        width: 34, height: 34, borderRadius: "50%",
-                        background: "var(--ax-midnight)",
+                        width: 32, height: 32, borderRadius: "50%", background: "var(--ax-midnight)",
                         border: `1px solid ${cfg.color || "var(--ax-border-strong)"}55`,
                         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                       }}>
-                        <cfg.Icon size={14} style={{ color: cfg.color || "var(--ax-fg-muted)" }} />
+                        <cfg.Icon size={13} style={{ color: cfg.color || "var(--ax-fg-muted)" }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, color: "var(--ax-fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1187,11 +1391,11 @@ function InsightModal({ insight, onClose, currency }) {
                         </div>
                       </div>
                       <div style={{
-                        fontFamily: "var(--ax-font-display)", fontSize: 14, fontWeight: 400,
+                        fontFamily: "var(--ax-font-display)", fontSize: 14,
                         color: isInc ? "var(--ax-gold)" : "var(--ax-fg)",
-                        whiteSpace: "nowrap",
+                        display: "flex", alignItems: "center",
                       }}>
-                        {isInc ? "+" : ""}{formatAmt(tx.amount)}
+                        <AmtFull value={tx.amount} currency={currency} showSign={isInc} />
                       </div>
                     </div>
                   );
