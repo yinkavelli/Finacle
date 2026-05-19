@@ -1,411 +1,453 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, AlertTriangle, TrendingUp } from "lucide-react";
-import {
-  ResponsiveContainer,
-  AreaChart, Area,
-  BarChart, Bar, Cell,
-  XAxis, Tooltip,
-} from "recharts";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getCategoryConfig, getParentCategory } from "@/utils/categoryConfig";
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// ── helpers ────────────────────────────────────────────────────────────────
 
-const offsetMonth = (key, delta) => {
-  const [y, m] = key.split("-").map(Number);
-  const d = new Date(y, m - 1 + delta, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-};
-
-const labelLong  = (key) => { const [y,m]=key.split("-").map(Number); return new Date(y,m-1,1).toLocaleString("en-US",{month:"long",year:"numeric"}); };
 const labelShort = (key) => { const [y,m]=key.split("-").map(Number); return new Date(y,m-1,1).toLocaleString("en-US",{month:"short",year:"2-digit"}); };
+const labelLong  = (key) => { const [y,m]=key.split("-").map(Number); return new Date(y,m-1,1).toLocaleString("en-US",{month:"long",year:"numeric"}); };
 
 const monthStats = (txList, mk) => {
-  const mTx = txList.filter(tx => tx.date.startsWith(mk));
+  const mTx     = txList.filter(tx => tx.date.startsWith(mk));
   const income   = mTx.filter(t => Number(t.amount) > 0).reduce((s,t) => s+Number(t.amount), 0);
   const spending = Math.abs(mTx.filter(t => Number(t.amount) < 0).reduce((s,t) => s+Number(t.amount), 0));
-  return { income, spending, saved: income - spending };
+  const rate     = income > 0 ? Math.round(((income - spending) / income) * 100) : 0;
+  return { income, spending, saved: income - spending, rate };
 };
 
-// ── Revolut-style dark card ───────────────────────────────────────────────────
-const RCard = ({ children, className = "", onClick }) => (
-  <div
-    onClick={onClick}
-    className={`rounded-2xl p-5 ${onClick ? "cursor-pointer active:opacity-80" : ""} ${className}`}
-    style={{ background: "#131850", border: "1px solid rgba(255,255,255,0.05)" }}
-  >
-    {children}
-  </div>
-);
-
-// ── Tooltip ───────────────────────────────────────────────────────────────────
-const DarkTip = ({ active, payload, label, currency }) => {
-  if (!active || !payload?.length) return null;
-  const fmt = v => {
-    const s = Math.abs(v).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
-    return currency === "AED" ? `Đ ${s}` : `$${s}`;
-  };
+function CatIcon({ category, size = 34 }) {
+  const cfg = getCategoryConfig(category);
   return (
-    <div className="rounded-xl px-2.5 py-1.5 text-xs shadow-xl"
-      style={{ background: "#1C234A", border: "1px solid rgba(255,255,255,0.08)" }}>
-      <p className="text-white/40 mb-0.5">{label}</p>
-      {payload.map(p => <p key={p.dataKey} className="font-bold text-white">{fmt(p.value)}</p>)}
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: "var(--ax-midnight)",
+      border: `1px solid ${cfg.color || "var(--ax-border-strong)"}55`,
+      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+    }}>
+      <cfg.Icon size={size * 0.44} style={{ color: cfg.color || "var(--ax-fg-muted)" }} />
     </div>
   );
-};
+}
 
-// ── main ──────────────────────────────────────────────────────────────────────
+function Eyebrow({ num, label }) {
+  return (
+    <div style={{
+      display: "inline-flex", alignItems: "center", gap: 8,
+      fontSize: "var(--ax-fs-eyebrow)", fontWeight: 500,
+      textTransform: "uppercase", letterSpacing: "0.32em",
+      color: "var(--ax-gold)", lineHeight: 1,
+    }}>
+      <span style={{ opacity: 0.6 }}>{String(num).padStart(2, "0")}</span>
+      <span style={{ width: 1, height: 10, background: "var(--ax-border-gold)" }} />
+      {label}
+    </div>
+  );
+}
+
+// ── Main ────────────────────────────────────────────────────────────────────
 
 export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
-  const fmt = (n, dec = 0) => {
-    const s = Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec});
+  const fmt = (n) => {
+    const s = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     return currency === "AED" ? `Đ ${s}` : `$${s}`;
   };
 
-  // ── month navigation ──────────────────────────────────────────────────────
+  // Month navigation
   const availableMonths = useMemo(() =>
-    [...new Set(txList.map(tx => tx.date.slice(0,7)))].sort()
+    [...new Set(txList.map(tx => tx.date.slice(0, 7)))].sort()
   , [txList]);
 
-  const latestMonth = availableMonths[availableMonths.length-1] || new Date().toISOString().slice(0,7);
+  const latestMonth    = availableMonths[availableMonths.length - 1] || new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState(null);
-  const activeMonth = selectedMonth || latestMonth;
-  const monthIdx   = availableMonths.indexOf(activeMonth);
-  const canGoBack  = monthIdx > 0;
-  const canGoFwd   = monthIdx < availableMonths.length - 1;
+  const activeMonth    = selectedMonth || latestMonth;
+  const monthIdx       = availableMonths.indexOf(activeMonth);
+  const canGoBack      = monthIdx > 0;
+  const canGoFwd       = monthIdx < availableMonths.length - 1;
 
-  // ── budgets ───────────────────────────────────────────────────────────────
+  // Budgets
   const [budgets, setBudgets] = useState([]);
   useEffect(() => {
     if (!userId) return;
-    try { const r = localStorage.getItem(`finacle_budgets_${userId}`); if (r) setBudgets(JSON.parse(r)); } catch {}
+    try {
+      const raw = localStorage.getItem(`finacle_budgets_${userId}`);
+      if (raw) setBudgets(JSON.parse(raw));
+    } catch {}
   }, [userId]);
 
-  // ── core monthly figures ──────────────────────────────────────────────────
-  const { income, spending, saved } = useMemo(() => monthStats(txList, activeMonth), [txList, activeMonth]);
-  const savingsRate = income > 0 ? (saved / income) * 100 : 0;
+  // Current month stats
+  const ms = useMemo(() => monthStats(txList, activeMonth), [txList, activeMonth]);
 
-  // ── daily cumulative spending (for the main Spent line chart) ─────────────
-  const dailyData = useMemo(() => {
-    const [y, m] = activeMonth.split("-").map(Number);
-    const daysInMonth = new Date(y, m, 0).getDate();
-    const byDay = {};
-    txList.filter(tx => tx.date.startsWith(activeMonth) && Number(tx.amount) < 0).forEach(tx => {
-      const day = parseInt(tx.date.split("-")[2]);
-      byDay[day] = (byDay[day] || 0) + Math.abs(Number(tx.amount));
-    });
-    let cum = 0;
-    return Array.from({ length: daysInMonth }, (_, i) => {
-      cum += byDay[i+1] || 0;
-      return { day: `${i+1}`, spent: Math.round(cum) };
+  // 6-month trend
+  const trend = useMemo(() => {
+    const end   = activeMonth;
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const [y, m] = end.split("-").map(Number);
+      const d      = new Date(y, m - 1 - i, 1);
+      const key    = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      months.push(key);
+    }
+    return months.map(mk => {
+      const s = monthStats(txList, mk);
+      return { mk, label: labelShort(mk), income: s.income, spent: s.spending, savings: s.saved };
     });
   }, [txList, activeMonth]);
 
-  // ── 6-month income bars ───────────────────────────────────────────────────
-  const incomeTrend = useMemo(() =>
-    Array.from({ length: 6 }, (_, i) => {
-      const mk = offsetMonth(activeMonth, i - 5);
-      return { month: labelShort(mk), income: Math.round(monthStats(txList, mk).income), isActive: i === 5 };
-    })
-  , [txList, activeMonth]);
+  const trendMax = Math.max(...trend.map(m => Math.max(m.income, m.spent)), 1);
 
-  // ── 6-month savings bars ──────────────────────────────────────────────────
-  const savingsTrend = useMemo(() =>
-    Array.from({ length: 6 }, (_, i) => {
-      const mk = offsetMonth(activeMonth, i - 5);
-      return { month: labelShort(mk), saved: Math.round(monthStats(txList, mk).saved), isActive: i === 5 };
-    })
-  , [txList, activeMonth]);
+  // Category breakdown
+  const catBreakdown = useMemo(() => {
+    const map = {};
+    txList
+      .filter(tx => tx.date.startsWith(activeMonth) && Number(tx.amount) < 0)
+      .forEach(tx => {
+        const parent = getParentCategory(tx.category);
+        if (!map[parent]) map[parent] = { amount: 0, transactions: [] };
+        map[parent].amount += Math.abs(Number(tx.amount));
+        map[parent].transactions.push(tx);
+      });
+    return Object.entries(map)
+      .filter(([k]) => k !== "Income" && k !== "Transfer")
+      .sort((a, b) => b[1].amount - a[1].amount)
+      .map(([name, data]) => ({ name, ...data }));
+  }, [txList, activeMonth]);
 
-  // ── category breakdown ────────────────────────────────────────────────────
-  const categoryBreakdown = useMemo(() => {
-    const totals = {};
-    txList.filter(tx => tx.date.startsWith(activeMonth) && Number(tx.amount) < 0).forEach(tx => {
-      const p = getParentCategory(tx.category);
-      totals[p] = (totals[p] || 0) + Math.abs(Number(tx.amount));
-    });
-    return Object.entries(totals).sort(([,a],[,b]) => b-a)
-      .map(([cat, amount]) => ({ cat, amount, pct: spending > 0 ? (amount/spending)*100 : 0 }));
-  }, [txList, activeMonth, spending]);
+  // Cut suggestions
+  const prevMonth = useMemo(() => {
+    if (monthIdx <= 0) return null;
+    return availableMonths[monthIdx - 1];
+  }, [monthIdx, availableMonths]);
 
-  // ── vs last month ─────────────────────────────────────────────────────────
-  const vsLastMonth = useMemo(() => {
-    const prev = offsetMonth(activeMonth, -1);
-    const prevTotals = {};
-    txList.filter(tx => tx.date.startsWith(prev) && Number(tx.amount) < 0).forEach(tx => {
-      const p = getParentCategory(tx.category);
-      prevTotals[p] = (prevTotals[p] || 0) + Math.abs(Number(tx.amount));
-    });
-    return categoryBreakdown.map(({ cat, amount, pct }) => {
-      const prevAmt = prevTotals[cat] || 0;
-      const change  = prevAmt > 0 ? ((amount - prevAmt) / prevAmt) * 100 : null;
-      return { cat, amount, pct, prevAmt, change };
-    });
-  }, [txList, activeMonth, categoryBreakdown]);
+  const prevMs = useMemo(() => prevMonth ? monthStats(txList, prevMonth) : null, [txList, prevMonth]);
 
-  const alerts = vsLastMonth.filter(c => c.change !== null && c.change > 20 && c.amount > 200).slice(0, 3);
+  const cuts = useMemo(() => {
+    if (!catBreakdown.length) return [];
+    return catBreakdown
+      .filter(cat => {
+        const budget = budgets.find(b => b.category === cat.name);
+        return budget && cat.amount > budget.limit;
+      })
+      .slice(0, 3)
+      .map(cat => {
+        const budget = budgets.find(b => b.category === cat.name);
+        return {
+          name: cat.name,
+          amount: cat.amount,
+          limit: budget.limit,
+          over: cat.amount - budget.limit,
+          transactions: cat.transactions,
+        };
+      });
+  }, [catBreakdown, budgets]);
 
-  const openModal = (cat) => {
-    if (!onCategoryClick) return;
-    const txs = txList.filter(tx => tx.category === cat && tx.date.startsWith(activeMonth));
-    onCategoryClick({ type: "category", title: `${cat} — ${labelLong(activeMonth)}`, transactions: txs });
+  // Savings rate status
+  const savingsStatus = ms.rate >= 20 ? "on-track" : ms.rate >= 10 ? "watch" : "over";
+  const statusMap = {
+    "on-track": { label: "On track", color: "#7A8C6F" },
+    "watch":    { label: "Watch",    color: "#D4B76A" },
+    "over":     { label: "Low",      color: "#D97757" },
   };
 
-  // ── empty state ───────────────────────────────────────────────────────────
-  if (!txList.length) return (
-    <div className="space-y-5 animate-slide-up">
-      <div className="flex items-center justify-between">
-        <p className="text-white/40 text-sm">Monthly analysis</p>
+  if (!txList.length) {
+    return (
+      <div style={{ padding: "60px 24px", textAlign: "center" }}>
+        <div style={{ fontFamily: "var(--ax-font-display)", fontSize: 24, fontWeight: 300, color: "var(--ax-fg)", marginBottom: 8 }}>
+          No data to analyse.
+        </div>
+        <div style={{ fontSize: 13, color: "var(--ax-fg-muted)" }}>
+          Import a bank statement CSV to unlock insights.
+        </div>
       </div>
-      <RCard className="p-14 flex flex-col items-center gap-4 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center">
-          <TrendingUp size={28} className="text-blue-400" />
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-white">No Data Yet</h3>
-          <p className="text-sm text-white/40 mt-1">Upload a CSV statement to see your analytics.</p>
-        </div>
-      </RCard>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="space-y-4 animate-slide-up">
+    <div style={{ padding: "20px 20px 8px", animation: "slide-up 0.42s cubic-bezier(0.22,1,0.36,1) forwards" }}>
 
-      {/* ── Selector row ── */}
-      <div className="flex items-center justify-between">
-        <button className="flex items-center gap-1 text-white text-[15px] font-semibold">
-          All accounts
-          <ChevronDown size={15} className="text-white/50 mt-0.5" />
-        </button>
-        <div className="flex items-center gap-1">
-          <button onClick={() => canGoBack && setSelectedMonth(availableMonths[monthIdx-1])}
-            disabled={!canGoBack}
-            className="p-1 text-white/30 disabled:opacity-20 hover:text-blue-400 transition-colors">
-            <ChevronLeft size={14} />
-          </button>
-          <button className="text-blue-400 text-[13px] font-semibold min-w-[80px] text-center">
-            {labelLong(activeMonth)}
-          </button>
-          <button onClick={() => canGoFwd && setSelectedMonth(availableMonths[monthIdx+1])}
-            disabled={!canGoFwd}
-            className="p-1 text-white/30 disabled:opacity-20 hover:text-blue-400 transition-colors">
-            <ChevronRight size={14} />
-          </button>
+      {/* Header + month nav */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
+        <div>
+          <Eyebrow num={4} label="Insights" />
+          <div style={{ fontFamily: "var(--ax-font-display)", fontSize: 26, fontWeight: 300, marginTop: 6, color: "var(--ax-fg)" }}>
+            Where to <em style={{ color: "var(--ax-fg-muted)" }}>reclaim.</em>
+          </div>
         </div>
-      </div>
-
-      {/* ── Main Spent card ── */}
-      <RCard>
-        <p className="text-white/50 text-[13px] font-medium mb-1">Spent</p>
-        {spending > 0 ? (
-          <>
-            <p className="text-white text-[28px] font-black tracking-tight tabular-nums leading-none mb-5">
-              {fmt(spending)}
-            </p>
-            {/* Line chart */}
-            <div style={{ height: 72 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dailyData} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
-                  <defs>
-                    <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="rgba(255,255,255,0.12)" />
-                      <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-                    </linearGradient>
-                  </defs>
-                  <Tooltip content={<DarkTip currency={currency} />} />
-                  <Area type="monotone" dataKey="spent" stroke="rgba(255,255,255,0.5)"
-                    strokeWidth={1.5} fill="url(#sg)" dot={false}
-                    activeDot={{ r: 3, fill: "#fff", strokeWidth: 0 }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            {/* Day markers */}
-            <div className="flex justify-between text-white/25 text-[10px] mt-1.5 px-0.5">
-              {["1","6","11","16","21","26","31"].map(d => <span key={d}>{d}</span>)}
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-white/40 text-[15px] font-medium mb-5">No spending this month</p>
-            <div style={{ height: 72 }} className="flex items-end">
-              <div className="w-full h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
-            </div>
-            <div className="flex justify-between text-white/20 text-[10px] mt-1.5 px-0.5">
-              {["1","6","11","16","21","26","31"].map(d => <span key={d}>{d}</span>)}
-            </div>
-          </>
+        {availableMonths.length > 1 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+            <button onClick={() => setSelectedMonth(availableMonths[monthIdx - 1])} disabled={!canGoBack} style={{
+              width: 28, height: 28, borderRadius: "var(--ax-radius-2)",
+              border: "1px solid var(--ax-border-strong)", background: "transparent",
+              color: canGoBack ? "var(--ax-fg-muted)" : "var(--ax-fg-faint)",
+              display: "flex", alignItems: "center", justifyContent: "center", cursor: canGoBack ? "pointer" : "default",
+            }}>
+              <ChevronLeft size={14} />
+            </button>
+            <span style={{ fontSize: 11, color: "var(--ax-fg-muted)", minWidth: 70, textAlign: "center" }}>
+              {labelLong(activeMonth).split(" ")[0]}
+            </span>
+            <button onClick={() => setSelectedMonth(availableMonths[monthIdx + 1])} disabled={!canGoFwd} style={{
+              width: 28, height: 28, borderRadius: "var(--ax-radius-2)",
+              border: "1px solid var(--ax-border-strong)", background: "transparent",
+              color: canGoFwd ? "var(--ax-fg-muted)" : "var(--ax-fg-faint)",
+              display: "flex", alignItems: "center", justifyContent: "center", cursor: canGoFwd ? "pointer" : "default",
+            }}>
+              <ChevronRight size={14} />
+            </button>
+          </div>
         )}
-      </RCard>
-
-      {/* ── Income + Net cash flow ── */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Income */}
-        <RCard className="!p-4">
-          <p className="text-white/50 text-[12px] font-medium mb-0.5">Income</p>
-          <p className="text-white text-[20px] font-black tracking-tight tabular-nums leading-tight mb-3">
-            {fmt(income)}
-          </p>
-          <div style={{ height: 52 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={incomeTrend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} barSize={7}>
-                <Tooltip content={<DarkTip currency={currency} />} />
-                <Bar dataKey="income" radius={[2,2,0,0]}>
-                  {incomeTrend.map((e, i) => (
-                    <Cell key={i} fill={e.isActive ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.15)"} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </RCard>
-
-        {/* Net cash flow */}
-        <RCard className="!p-4">
-          <p className="text-white/50 text-[12px] font-medium mb-0.5">Net cash flow</p>
-          <p className={`text-[20px] font-black tracking-tight tabular-nums leading-tight mb-3 ${
-            saved >= 0 ? "text-emerald-400" : "text-red-400"
-          }`}>
-            {saved >= 0 ? "" : "−"}{fmt(Math.abs(saved))}
-          </p>
-          <div style={{ height: 52 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={savingsTrend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} barSize={7}>
-                <Tooltip content={<DarkTip currency={currency} />} />
-                <Bar dataKey="saved" radius={[2,2,0,0]}>
-                  {savingsTrend.map((e, i) => (
-                    <Cell key={i} fill={
-                      e.isActive
-                        ? (e.saved >= 0 ? "rgba(52,211,153,0.85)" : "rgba(248,113,113,0.85)")
-                        : "rgba(255,255,255,0.15)"
-                    } />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </RCard>
       </div>
 
-      {/* Pagination dots */}
-      <div className="flex justify-center gap-1.5 py-1">
-        {[0, 1, 2, 3].map(i => (
-          <div key={i} className={`rounded-full transition-all ${i === 0 ? "w-4 h-1.5 bg-white/60" : "w-1.5 h-1.5 bg-white/20"}`} />
-        ))}
-      </div>
+      {/* Reclaim hero */}
+      {(ms.income > 0 || ms.spending > 0) && (
+        <div style={{
+          background: "var(--ax-midnight)", border: "1px solid var(--ax-border-gold-soft)",
+          borderRadius: "var(--ax-radius-2)", padding: "22px 20px", marginBottom: 20,
+          position: "relative", overflow: "hidden",
+        }}>
+          <div className="ax-halftone" style={{ top: -20, right: -20, width: 200, height: 200, opacity: 0.5 }} />
+          <div style={{ fontSize: 10, letterSpacing: "0.32em", color: "var(--ax-gold)", textTransform: "uppercase", fontWeight: 500 }}>
+            {labelLong(activeMonth)}
+          </div>
+          <div style={{ marginTop: 10, display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span style={{
+              fontFamily: "var(--ax-font-display)", fontSize: 48, fontWeight: 300,
+              letterSpacing: "-0.025em", lineHeight: 1,
+              color: ms.saved >= 0 ? "var(--ax-gold)" : "var(--ax-error)",
+            }}>
+              {fmt(Math.abs(ms.saved))}
+            </span>
+            <span style={{ fontSize: 12, color: "var(--ax-fg-muted)" }}>
+              {ms.saved >= 0 ? "saved" : "over-spent"}
+            </span>
+          </div>
+          <div style={{
+            fontFamily: "var(--ax-font-display)", fontSize: 16, fontWeight: 300,
+            marginTop: 8, lineHeight: 1.4, color: "var(--ax-fg)",
+          }}>
+            <em style={{ color: "var(--ax-fg-muted)" }}>{fmt(ms.spending)}</em> spent of{" "}
+            <em style={{ color: "var(--ax-gold)" }}>{fmt(ms.income)}</em> income —{" "}
+            <em style={{ color: ms.rate >= 20 ? "#7A8C6F" : ms.rate >= 10 ? "#D4B76A" : "var(--ax-error)" }}>
+              {ms.rate}% savings rate
+            </em>
+          </div>
+        </div>
+      )}
 
-      {/* ── Overview section ── */}
-      <p className="text-white text-[20px] font-bold mt-1">Overview</p>
-
-      {/* Spending by category */}
-      {categoryBreakdown.length > 0 && (
-        <RCard>
-          <p className="text-white/50 text-[12px] font-medium mb-4">Spending by category</p>
-          <div className="space-y-4">
-            {categoryBreakdown.map(({ cat, amount, pct }) => {
-              const { Icon, color, iconBg, iconText } = getCategoryConfig(cat);
+      {/* Over-budget alerts */}
+      {cuts.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <Eyebrow num={1} label="Over budget" />
+          <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+            {cuts.map(cut => {
+              const cfg = getCategoryConfig(cut.name);
               return (
-                <button key={cat} onClick={() => openModal(cat)}
-                  className="w-full flex items-center gap-3 text-left hover:opacity-80 transition-opacity">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
-                    <Icon size={14} className={iconText} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-white text-[13px] font-medium truncate">{cat}</span>
-                      <span className="text-white/40 text-[11px] tabular-nums ml-2 shrink-0">{pct.toFixed(0)}%</span>
+                <div key={cut.name} style={{
+                  background: "var(--ax-midnight)", border: "1px solid var(--ax-border)",
+                  borderRadius: "var(--ax-radius-2)", padding: 16,
+                  position: "relative", overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "border-color 220ms var(--ax-ease)",
+                }}
+                onClick={() => onCategoryClick?.({ type: "category", title: cut.name, transactions: cut.transactions })}
+                onMouseEnter={e => e.currentTarget.style.borderColor = "var(--ax-border-gold-soft)"}
+                onMouseLeave={e => e.currentTarget.style.borderColor = "var(--ax-border)"}>
+                  <div style={{ position: "absolute", left: 0, top: 14, bottom: 14, width: 2, background: cfg.color || "var(--ax-gold)" }} />
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <CatIcon category={cut.name} size={36} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 10, letterSpacing: "0.28em", color: cfg.color || "var(--ax-gold)", textTransform: "uppercase", fontWeight: 500 }}>
+                          {cut.name}
+                        </span>
+                        <span style={{ fontFamily: "var(--ax-font-display)", fontSize: 18, fontStyle: "italic", color: "var(--ax-error)" }}>
+                          +{fmt(cut.over)}
+                        </span>
+                      </div>
+                      <div style={{ fontFamily: "var(--ax-font-display)", fontSize: 14, fontWeight: 300, color: "var(--ax-fg)", lineHeight: 1.4 }}>
+                        {fmt(cut.amount)} spent vs {fmt(cut.limit)} budget.
+                      </div>
                     </div>
-                    <div className="h-[3px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
-                      <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
-                    </div>
                   </div>
-                  <span className="text-white/50 text-[12px] tabular-nums shrink-0 ml-1">{fmt(amount)}</span>
-                </button>
+                </div>
               );
             })}
           </div>
-        </RCard>
+        </div>
+      )}
+
+      {/* 6-month trend */}
+      <div style={{ marginBottom: 20 }}>
+        <Eyebrow num={2} label="Coverage · 6 months" />
+        <div style={{
+          marginTop: 14, background: "var(--ax-midnight)",
+          border: "1px solid var(--ax-border)", borderRadius: "var(--ax-radius-2)",
+          padding: "20px 16px",
+        }}>
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8,
+            alignItems: "flex-end", height: 120,
+          }}>
+            {trend.map((m, i) => {
+              const isCurrent = m.mk === activeMonth;
+              const covered   = m.income >= m.spent;
+              const spentH    = m.spent > 0 ? (m.spent / trendMax) * 100 : 2;
+              const incomeY   = m.income > 0
+                ? `${((m.income - m.spent) / Math.max(m.spent, 1)) * 100}%`
+                : "0%";
+              return (
+                <div key={i} style={{
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  gap: 4, height: "100%", justifyContent: "flex-end", position: "relative",
+                }}>
+                  <div style={{
+                    width: "70%", height: `${spentH}%`,
+                    background: covered ? "rgba(201,165,90,0.18)" : "rgba(217,119,87,0.4)",
+                    borderTop: `2px solid ${covered ? "var(--ax-gold)" : "var(--ax-error)"}`,
+                    transition: "all 600ms var(--ax-ease)", minHeight: 3,
+                    position: "relative",
+                  }}>
+                    {m.income > 0 && (
+                      <div style={{
+                        position: "absolute", left: "-15%", right: "-15%",
+                        bottom: incomeY, height: 0,
+                        borderTop: "1px dashed var(--ax-fg-faint)",
+                      }} />
+                    )}
+                  </div>
+                  {isCurrent && (
+                    <div style={{
+                      position: "absolute", bottom: "calc(100% + 4px)",
+                      fontSize: 8, color: "var(--ax-gold)",
+                      fontFamily: "var(--ax-font-display)", fontStyle: "italic",
+                      whiteSpace: "nowrap",
+                    }}>so far</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Month labels */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8, marginTop: 10 }}>
+            {trend.map((m, i) => (
+              <div key={i} style={{
+                fontSize: 9, textAlign: "center", letterSpacing: "0.14em",
+                textTransform: "uppercase", fontWeight: 500,
+                color: m.mk === activeMonth ? "var(--ax-gold)" : "var(--ax-fg-muted)",
+              }}>
+                {m.label}
+              </div>
+            ))}
+          </div>
+
+          {/* Legend + avg */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--ax-border)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 10, color: "var(--ax-fg-muted)" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ width: 10, borderTop: "1px dashed var(--ax-fg-muted)", display: "inline-block" }} />
+                Income
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ width: 8, height: 8, background: "var(--ax-gold)", borderRadius: 1, display: "inline-block" }} />
+                Spent
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--ax-fg-muted)" }}>
+              Avg saved:{" "}
+              <span style={{ fontFamily: "var(--ax-font-display)", fontStyle: "italic", color: "var(--ax-gold)", fontSize: 14 }}>
+                {fmt(trend.reduce((s, m) => s + m.savings, 0) / Math.max(trend.filter(m => m.income > 0).length, 1))}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Category breakdown */}
+      {catBreakdown.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <Eyebrow num={3} label="Spending breakdown" />
+          <div style={{
+            marginTop: 14, background: "var(--ax-midnight)",
+            border: "1px solid var(--ax-border)", borderRadius: "var(--ax-radius-2)",
+            overflow: "hidden",
+          }}>
+            {catBreakdown.map((cat, i) => {
+              const pct = ms.spending > 0 ? (cat.amount / ms.spending) * 100 : 0;
+              const cfg = getCategoryConfig(cat.name);
+              return (
+                <div key={cat.name} style={{
+                  padding: "14px 16px",
+                  borderBottom: i < catBreakdown.length - 1 ? "1px solid var(--ax-border)" : "none",
+                  cursor: "pointer", transition: "background 220ms var(--ax-ease)",
+                }}
+                onClick={() => onCategoryClick?.({ type: "category", title: cat.name, transactions: cat.transactions })}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(201,165,90,0.04)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                    <CatIcon category={cat.name} size={32} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: 14, color: "var(--ax-fg)" }}>{cat.name}</span>
+                        <span style={{ fontFamily: "var(--ax-font-display)", fontSize: 14, color: "var(--ax-fg)" }}>
+                          {fmt(cat.amount)}
+                          <span style={{ color: "var(--ax-fg-faint)", fontSize: 11, marginLeft: 4 }}>{pct.toFixed(0)}%</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ width: "100%", height: 2, borderRadius: 2, background: "var(--ax-border)", overflow: "hidden" }}>
+                    <div style={{
+                      width: `${Math.min(pct, 100)}%`, height: "100%",
+                      background: cfg.color || "var(--ax-gold)",
+                      transition: "width 600ms var(--ax-ease)",
+                    }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Savings rate card */}
-      <RCard>
-        <p className="text-white/50 text-[12px] font-medium mb-1">Savings rate</p>
-        <p className={`text-[28px] font-black tracking-tight tabular-nums leading-none mb-4 ${
-          savingsRate >= 15 ? "text-emerald-400" : savingsRate >= 5 ? "text-amber-400" : "text-red-400"
-        }`}>
-          {savingsRate.toFixed(1)}%
-        </p>
-        <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
-          <div className="h-full rounded-full transition-all duration-700"
-            style={{
-              width: `${Math.max(0, Math.min(100, savingsRate))}%`,
-              background: savingsRate >= 15 ? "#34d399" : savingsRate >= 5 ? "#fbbf24" : "#f87171"
-            }}
-          />
+      <div>
+        <Eyebrow num={4} label="Savings rate" />
+        <div style={{
+          marginTop: 14, background: "var(--ax-midnight)",
+          border: "1px solid var(--ax-border)", borderRadius: "var(--ax-radius-2)",
+          padding: "18px 20px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div>
+            <div style={{ fontFamily: "var(--ax-font-display)", fontSize: 36, fontWeight: 300, letterSpacing: "-0.02em", lineHeight: 1,
+              color: ms.rate >= 20 ? "#7A8C6F" : ms.rate >= 10 ? "#D4B76A" : "var(--ax-error)",
+            }}>
+              {ms.rate}%
+            </div>
+            <div style={{ fontSize: 11, color: "var(--ax-fg-muted)", marginTop: 6 }}>
+              {ms.rate >= 20 ? "Excellent — you're building real wealth." :
+               ms.rate >= 10 ? "Good — push to 20% for stronger reserves." :
+               "Below target — consider cutting discretionary spend."}
+            </div>
+          </div>
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "5px 10px", borderRadius: 2,
+            background: `${statusMap[savingsStatus].color}20`,
+            border: `1px solid ${statusMap[savingsStatus].color}55`,
+            color: statusMap[savingsStatus].color,
+            fontSize: 10, fontWeight: 500, letterSpacing: "0.26em", textTransform: "uppercase",
+          }}>
+            <span style={{ width: 5, height: 5, borderRadius: "50%", background: statusMap[savingsStatus].color }} />
+            {statusMap[savingsStatus].label}
+          </span>
         </div>
-        <p className="text-white/30 text-[11px] mt-2">
-          {savingsRate >= 25 ? "Excellent — keep it up" : savingsRate >= 15 ? "Healthy savings rate" : savingsRate >= 5 ? "Could be improved" : "Try to reduce spending"}
-        </p>
-      </RCard>
-
-      {/* vs last month */}
-      {vsLastMonth.length > 0 && (
-        <RCard>
-          <p className="text-white/50 text-[12px] font-medium mb-4">vs last month</p>
-          <div className="space-y-3">
-            {vsLastMonth.map(({ cat, amount, change }) => {
-              const { Icon, iconBg, iconText } = getCategoryConfig(cat);
-              const up   = change !== null && change >  5;
-              const down = change !== null && change < -5;
-              return (
-                <button key={cat} onClick={() => openModal(cat)}
-                  className="w-full flex items-center gap-3 hover:opacity-80 transition-opacity">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
-                    <Icon size={14} className={iconText} />
-                  </div>
-                  <span className="flex-1 text-white text-[13px] font-medium text-left truncate">{cat}</span>
-                  {change !== null && (
-                    <span className={`text-[11px] font-bold shrink-0 ${up ? "text-red-400" : down ? "text-emerald-400" : "text-white/30"}`}>
-                      {up ? "↑" : down ? "↓" : "→"}{Math.abs(change).toFixed(0)}%
-                    </span>
-                  )}
-                  <span className="text-white/50 text-[12px] tabular-nums shrink-0 ml-1">{fmt(amount)}</span>
-                </button>
-              );
-            })}
-          </div>
-        </RCard>
-      )}
-
-      {/* Spending alerts */}
-      {alerts.length > 0 && (
-        <RCard className="border-amber-500/20">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle size={13} className="text-amber-400" />
-            <p className="text-amber-400 text-[12px] font-bold uppercase tracking-wider">Alerts</p>
-          </div>
-          <div className="space-y-3">
-            {alerts.map(({ cat, amount, change }) => {
-              const { Icon, iconBg, iconText } = getCategoryConfig(cat);
-              return (
-                <button key={cat} onClick={() => openModal(cat)}
-                  className="w-full flex items-center gap-3 hover:opacity-80 transition-opacity">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
-                    <Icon size={14} className={iconText} />
-                  </div>
-                  <span className="flex-1 text-white text-[13px] font-medium text-left">{cat}</span>
-                  <span className="text-red-400 text-[11px] font-bold">+{change.toFixed(0)}%</span>
-                  <span className="text-white/50 text-[12px] tabular-nums">{fmt(amount)}</span>
-                </button>
-              );
-            })}
-          </div>
-        </RCard>
-      )}
-
-      {/* Bottom spacer */}
-      <div className="h-2" />
+      </div>
     </div>
   );
 }

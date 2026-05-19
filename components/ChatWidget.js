@@ -155,73 +155,114 @@ export function ChatWidget({ txList = [], currency = "AED" }) {
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        style={{ transform: `translate3d(${pos.x}px, ${pos.y}px, 0)` }}
-        className={`fixed bottom-24 sm:bottom-8 right-4 sm:right-6 p-4 rounded-2xl border border-indigo-500/50 bg-gradient-to-br from-indigo-600 to-indigo-900 text-white shadow-[0_4px_24px_rgba(99,102,241,0.5)] hover:scale-105 hover:shadow-[0_4px_32px_rgba(99,102,241,0.7)] transition-[transform,opacity,scale] z-50 overflow-hidden group touch-none ${isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"} ${isDragging ? "cursor-grabbing transition-none" : "cursor-grab"}`}
-        aria-label="Open AI Advisor Chat"
-      >
-        <div className="shimmer-overlay shimmer-overlay-indigo pointer-events-none"></div>
-        <MessageSquare size={24} className="relative z-10 pointer-events-none" />
+        aria-label="Open AI Advisor"
+        style={{
+          position: "fixed", bottom: 88, right: 16,
+          width: 48, height: 48,
+          borderRadius: "var(--ax-radius-2)",
+          background: "var(--ax-midnight)",
+          border: "1px solid var(--ax-border-gold)",
+          color: "var(--ax-gold)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "var(--ax-gold-glow-soft)",
+          cursor: isDragging ? "grabbing" : "grab",
+          zIndex: 49, touchAction: "none",
+          transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
+          opacity: isOpen ? 0 : 1,
+          pointerEvents: isOpen ? "none" : "auto",
+          transition: "opacity 200ms var(--ax-ease)",
+        }}>
+        <MessageSquare size={20} />
       </button>
 
       {/* Chat window */}
-      <div
-        className={`fixed bottom-24 sm:bottom-8 right-4 left-4 sm:left-auto sm:right-6 sm:w-80 md:w-96 max-h-[600px] h-[75dvh] border border-indigo-500/20 dark:border-indigo-500/50 bg-[#EEF2FA]/97 dark:bg-[#0D1525]/97 backdrop-blur-xl shadow-[0_4px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_40px_rgba(0,0,0,0.5)] rounded-2xl flex flex-col z-50 transition-all duration-300 transform sm:origin-bottom-right overflow-hidden ${isOpen ? "translate-y-0 opacity-100 scale-100" : "translate-y-10 sm:translate-y-0 sm:scale-50 opacity-0 pointer-events-none"}`}
-      >
-        <div className="shimmer-overlay shimmer-overlay-indigo opacity-10 dark:opacity-20 pointer-events-none"></div>
-
+      <div style={{
+        position: "fixed", bottom: 88, right: 12, left: 12,
+        maxWidth: 400, marginLeft: "auto",
+        maxHeight: 520, height: "70dvh",
+        background: "var(--ax-midnight)",
+        border: "1px solid var(--ax-border-gold-soft)",
+        borderRadius: 12,
+        boxShadow: "var(--ax-gold-glow)",
+        display: "flex", flexDirection: "column",
+        zIndex: 49, overflow: "hidden",
+        opacity: isOpen ? 1 : 0,
+        transform: isOpen ? "translateY(0) scale(1)" : "translateY(16px) scale(0.97)",
+        pointerEvents: isOpen ? "auto" : "none",
+        transition: "opacity 280ms var(--ax-ease), transform 280ms var(--ax-ease)",
+      }}>
         {/* Header */}
-        <div className="relative z-10 flex items-center justify-between p-4 border-b border-slate-100 dark:border-white/[0.07] bg-slate-50/50 dark:bg-white/5">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-lg">
-              <Bot size={20} />
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "14px 16px", borderBottom: "1px solid var(--ax-border)",
+          background: "var(--ax-card)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: "var(--ax-radius-2)",
+              background: "rgba(201,165,90,0.1)", border: "1px solid var(--ax-border-gold-soft)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "var(--ax-gold)",
+            }}>
+              <Bot size={16} />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-white text-sm">AI Advisor</h3>
+              <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ax-fg)" }}>AI Advisor</div>
               {txList.length > 0 && (
-                <p className="text-[10px] text-emerald-500 dark:text-emerald-400 font-medium">
+                <div style={{ fontSize: 10, color: "var(--ax-gold)", letterSpacing: "0.12em" }}>
                   {txList.length} transactions loaded
-                </p>
+                </div>
               )}
             </div>
           </div>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-1 hover:bg-slate-100 dark:hover:bg-white/[0.04] rounded-md transition-colors text-slate-500 dark:text-slate-400"
-          >
-            <X size={20} />
+          <button onClick={() => setIsOpen(false)} style={{
+            background: "transparent", border: "none",
+            color: "var(--ax-fg-muted)", cursor: "pointer",
+          }}>
+            <X size={18} />
           </button>
         </div>
 
         {/* Messages */}
-        <div className="relative z-10 flex-1 overflow-y-auto p-4 space-y-4">
+        <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12 }} className="scroll-thin">
           {messages.map((msg, i) => {
             const isCurrentlyStreaming = isStreamingLastMessage && i === messages.length - 1;
             const isEmpty = msg.content === "";
-
+            const isUser  = msg.role === "user";
             return (
-              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`flex gap-2 max-w-[85%] sm:max-w-[80%] ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${msg.role === "user" ? "bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-lg" : "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"}`}>
-                    {msg.role === "user" ? <User size={16} /> : <Bot size={16} />}
-                  </div>
-                  <div className={`p-3 text-sm ${msg.role === "user" ? "bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-2xl rounded-tr-sm shadow-lg" : "bg-[#DDE2ED] dark:bg-[#161E30]/90 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm border border-slate-100 dark:border-white/[0.08]"}`}>
-                    {/* Typing dots while waiting for first chunk */}
-                    {isCurrentlyStreaming && isEmpty ? (
-                      <div className="flex items-center gap-1 py-0.5">
-                        <div className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <div className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <div className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                      </div>
-                    ) : (
-                      <p className="leading-relaxed whitespace-pre-wrap">
-                        {msg.content}
-                        {/* Blinking cursor while streaming */}
-                        {isCurrentlyStreaming && !isEmpty && (
-                          <span className="inline-block w-[2px] h-[1em] bg-current align-middle ml-0.5 animate-pulse" />
-                        )}
-                      </p>
-                    )}
-                  </div>
+              <div key={i} style={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start" }}>
+                <div style={{
+                  maxWidth: "82%",
+                  padding: "10px 14px",
+                  borderRadius: isUser ? "10px 10px 2px 10px" : "10px 10px 10px 2px",
+                  background: isUser ? "var(--ax-gold)" : "var(--ax-card)",
+                  border: isUser ? "none" : "1px solid var(--ax-border)",
+                  color: isUser ? "var(--ax-midnight)" : "var(--ax-fg)",
+                  fontSize: 13, lineHeight: 1.55,
+                }}>
+                  {isCurrentlyStreaming && isEmpty ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 0" }}>
+                      {[0, 150, 300].map(delay => (
+                        <div key={delay} style={{
+                          width: 6, height: 6, borderRadius: "50%",
+                          background: "var(--ax-fg-muted)",
+                          animation: "ax-pulse-gold 1.2s infinite",
+                          animationDelay: `${delay}ms`,
+                        }} />
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                      {msg.content}
+                      {isCurrentlyStreaming && !isEmpty && (
+                        <span style={{
+                          display: "inline-block", width: 2, height: "1em",
+                          background: "currentColor", verticalAlign: "middle",
+                          marginLeft: 2, animation: "ax-pulse-gold 0.8s infinite",
+                        }} />
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
             );
@@ -230,29 +271,34 @@ export function ChatWidget({ txList = [], currency = "AED" }) {
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSend} className="p-3 border-t border-[var(--color-card-border)] bg-[var(--color-background)]/50 rounded-b-2xl">
-          {!txList.length && (
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center mb-2">
-              Upload a CSV to get personalised advice
-            </p>
-          )}
-          <div className="flex items-center gap-2 relative">
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder={txList.length ? "Ask about your finances…" : "Load your data first…"}
-              className="w-full bg-[var(--color-background)] text-[var(--color-foreground)] border border-[var(--color-card-border)] rounded-full pl-4 pr-12 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-primary)]/50 transition-all"
-            />
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              className="absolute right-1 p-1.5 bg-[var(--color-accent-primary)] text-white rounded-full hover:bg-[var(--color-accent-secondary)] disabled:opacity-50 disabled:hover:bg-[var(--color-accent-primary)] transition-colors"
-            >
-              <Send size={16} />
-            </button>
-          </div>
+        <form onSubmit={handleSend} style={{
+          padding: "12px 14px", borderTop: "1px solid var(--ax-border)",
+          display: "flex", gap: 8, alignItems: "center",
+        }}>
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder={txList.length ? "Ask about your finances…" : "Load data first…"}
+            style={{
+              flex: 1, background: "var(--ax-card)", border: "1px solid var(--ax-border)",
+              borderRadius: "var(--ax-radius-2)", padding: "10px 14px",
+              color: "var(--ax-fg)", fontFamily: "var(--ax-font-body)", fontSize: 13,
+              outline: "none",
+            }}
+          />
+          <button type="submit" disabled={!input.trim() || isLoading} style={{
+            width: 36, height: 36, borderRadius: "var(--ax-radius-2)",
+            background: input.trim() && !isLoading ? "var(--ax-gold)" : "transparent",
+            border: `1px solid ${input.trim() && !isLoading ? "var(--ax-gold)" : "var(--ax-border-strong)"}`,
+            color: input.trim() && !isLoading ? "var(--ax-midnight)" : "var(--ax-fg-faint)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: input.trim() && !isLoading ? "pointer" : "default",
+            flexShrink: 0, transition: "all 180ms var(--ax-ease)",
+          }}>
+            <Send size={14} />
+          </button>
         </form>
       </div>
     </>

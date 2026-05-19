@@ -1,147 +1,180 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500;700&display=swap");
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ── Light mode tokens ─────────────────────────────────────────────────────── */
+/* ── Axinity Partners Design Tokens ──────────────────────────────────────── */
 :root {
-  --background: #f0f3f9;
-  --foreground: #0f172a;
-  --card-bg: #e8ecf5;           /* flat cool-grey cards, darker than page gradient */
-  --card-surface: #dde2ed;      /* deeper surface: inputs, table headers */
-  --card-border: rgba(0, 0, 0, 0.06);
-  --accent-primary: #1e40af;
-  --accent-secondary: #4f46e5;
-  --accent-positive: #059669;
+  /* Core palette */
+  --ax-midnight:        #0A0908;
+  --ax-parchment:       #F5F3EF;
+  --ax-gold:            #C9A55A;
+  --ax-gold-bright:     #D4B76A;
+  --ax-gold-dim:        #9A7B3D;
+  --ax-card:            #1A1815;
+  --ax-amber:           #FFB347;
+
+  /* Functional surfaces */
+  --ax-bg:              var(--ax-midnight);
+  --ax-bg-elev:         var(--ax-card);
+
+  /* Text */
+  --ax-fg:              var(--ax-parchment);
+  --ax-fg-muted:        rgba(245, 243, 239, 0.45);
+  --ax-fg-faint:        rgba(245, 243, 239, 0.25);
+  --ax-fg-accent:       var(--ax-gold);
+
+  /* Borders */
+  --ax-border:          rgba(245, 243, 239, 0.08);
+  --ax-border-strong:   rgba(245, 243, 239, 0.16);
+  --ax-border-gold:     rgba(201, 165, 90, 0.40);
+  --ax-border-gold-soft:rgba(201, 165, 90, 0.18);
+
+  /* Atmospheres */
+  --ax-gold-glow:       0 0 60px rgba(201, 165, 90, 0.20);
+  --ax-gold-glow-soft:  0 0 24px rgba(201, 165, 90, 0.10);
+  --ax-radial-gold:     radial-gradient(ellipse at top, rgba(201, 165, 90, 0.08) 0%, transparent 60%);
+
+  /* Fonts */
+  --ax-font-display:    "Cormorant Garamond", "Garamond", "Times New Roman", serif;
+  --ax-font-body:       "DM Sans", "Helvetica Neue", Arial, sans-serif;
+
+  /* Type scale */
+  --ax-fs-eyebrow:      0.8rem;
+  --ax-fs-caption:      0.75rem;
+  --ax-fs-small:        0.875rem;
+  --ax-fs-body:         1rem;
+  --ax-fs-lede:         1.125rem;
+  --ax-fs-h4:           1.5rem;
+  --ax-fs-h3:           2rem;
+  --ax-fs-h2:           2.75rem;
+
+  /* Radii — max 4px, never pill */
+  --ax-radius-0: 0;
+  --ax-radius-1: 2px;
+  --ax-radius-2: 4px;
+
+  /* Shadows */
+  --ax-shadow-card:     0 1px 0 rgba(245, 243, 239, 0.04) inset;
+  --ax-shadow-hover:    0 30px 60px -30px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--ax-border-gold-soft);
+
+  /* Motion */
+  --ax-ease:            cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ax-ease-out:        cubic-bezier(0.16, 1, 0.3, 1);
+  --ax-dur-fast:        180ms;
+  --ax-dur-base:        320ms;
+
+  /* Halftone */
+  --ax-halftone-color:  #FFB347;
+
+  /* Error color */
+  --ax-error:           #D97757;
 }
 
-/* ── Dark mode tokens ─────────────────────────────────────────────────────── */
-.dark {
-  --background: #080C18;
-  --foreground: #f8fafc;
-  --card-bg: #0F1535;           /* deep-blue flat cards */
-  --card-surface: #131850;      /* slightly elevated blue surface */
-  --card-border: rgba(255, 255, 255, 0.06);
-  --accent-primary: #60a5fa;
-  --accent-secondary: #818cf8;
-  --accent-positive: #34d399;
-}
-
+/* ── Tailwind theme bridge ────────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card-bg);
-  --color-card-surface: var(--card-surface);
-  --color-card-border: var(--card-border);
-  --color-accent-primary: var(--accent-primary);
-  --color-accent-secondary: var(--accent-secondary);
-  --color-accent-positive: var(--accent-positive);
-  --font-sans: var(--font-inter);
-  --animate-fade-in: fade-in 0.25s ease-out forwards;
-  --animate-slide-up: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  --animate-zoom-in: zoom-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  --color-background: var(--ax-midnight);
+  --color-foreground: var(--ax-parchment);
+  --color-card:       var(--ax-card);
+  --color-gold:       var(--ax-gold);
+  --font-sans:        var(--ax-font-body);
+  --font-display:     var(--ax-font-display);
+
+  --animate-fade-in:  fade-in 0.25s ease-out forwards;
+  --animate-slide-up: slide-up 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  --animate-zoom-in:  zoom-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  --animate-slide-up-sheet: slide-up-sheet 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* ── Animations ─────────────────────────────────────────────────────────────── */
+/* ── Keyframes ────────────────────────────────────────────────────────────── */
 @keyframes fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(32px); }
+  from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes slide-up-sheet {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
 @keyframes zoom-in {
-  0%   { opacity: 0; transform: scale(0.86) translateY(24px); }
-  60%  { opacity: 1; transform: scale(1.03) translateY(-3px); }
+  0%   { opacity: 0; transform: scale(0.88) translateY(20px); }
+  60%  { opacity: 1; transform: scale(1.02) translateY(-2px); }
   100% { opacity: 1; transform: scale(1)    translateY(0); }
 }
-
-/* ── Body backgrounds ─────────────────────────────────────────────────────── */
-
-/* Light: premium metallic silver-pearl gradient */
-body {
-  background: var(--background);
-  color: var(--foreground);
-  background-image: linear-gradient(
-    150deg,
-    #d8dfe9 0%,
-    #e8edf6 20%,
-    #f4f7fc 45%,
-    #ffffff  65%,
-    #edf1f8 85%,
-    #dde3ee 100%
-  );
-  background-attachment: fixed;
+@keyframes ax-pulse-gold {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
 }
-
-/* Dark: deep navy + vivid blue radial glow (Revolut feel) */
-.dark body {
-  background: #080C18;
-  background-image:
-    radial-gradient(ellipse 110% 55% at 50% -15%, rgba(59, 130, 246, 0.22), transparent),
-    radial-gradient(ellipse 70%  40% at 90%  80%, rgba(99, 102, 241, 0.10), transparent);
-  background-attachment: fixed;
-}
-
-/* ── Shared card utility ─────────────────────────────────────────────────────── */
-/* Use .app-card for consistent themed card surfaces */
-.app-card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 1rem;
-}
-
-/* ── Glass panel (light uses subtle frosting, dark is solid) ─────────────────── */
-.glass-panel {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 1rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
-}
-.dark .glass-panel {
-  background: #0F1535;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-color: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-}
-
-/* ── Shimmer overlays ─────────────────────────────────────────────────────── */
 @keyframes shimmer {
   0%   { background-position:  200% 0; }
   100% { background-position: -200% 0; }
 }
-.shimmer-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.02) 50%, transparent 100%);
-  background-size: 200% 100%;
-  animation: shimmer 3s infinite linear;
-  pointer-events: none;
-}
-.dark .shimmer-overlay         { background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.02) 50%, transparent 100%); }
-.dark .shimmer-overlay-indigo  { background: linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.05)  50%, transparent 100%); }
-.dark .shimmer-overlay-emerald { background: linear-gradient(90deg, transparent 0%, rgba(16,185,129,0.05)  50%, transparent 100%); }
-.dark .shimmer-overlay-violet  { background: linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.05)  50%, transparent 100%); }
-.dark .shimmer-overlay-amber   { background: linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.05)  50%, transparent 100%); }
-.dark .shimmer-overlay-red     { background: linear-gradient(90deg, transparent 0%, rgba(239,68,68,0.05)   50%, transparent 100%); }
 
-/* ── Scrollbars ─────────────────────────────────────────────────────────────── */
+/* ── Base reset ───────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--ax-midnight);
+  color: var(--ax-fg);
+  font-family: var(--ax-font-body);
+  font-size: var(--ax-fs-body);
+  line-height: 1.65;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Subtle radial gold atmosphere on page bg */
+body {
+  background-image: var(--ax-radial-gold);
+  background-attachment: fixed;
+}
+
+/* ── Axinity card utility ─────────────────────────────────────────────────── */
+.ax-card {
+  background: var(--ax-card);
+  border: 1px solid var(--ax-border);
+  border-radius: var(--ax-radius-2);
+  box-shadow: var(--ax-shadow-card);
+}
+
+.ax-card-midnight {
+  background: var(--ax-midnight);
+  border: 1px solid var(--ax-border);
+  border-radius: var(--ax-radius-2);
+}
+
+/* ── Scrollbars ───────────────────────────────────────────────────────────── */
 .scroll-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(100, 116, 139, 0.3) transparent;
+  scrollbar-color: rgba(201, 165, 90, 0.2) transparent;
 }
-.scroll-thin::-webkit-scrollbar       { width: 4px; }
+.scroll-thin::-webkit-scrollbar       { width: 3px; }
 .scroll-thin::-webkit-scrollbar-track { background: transparent; }
-.scroll-thin::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.3); border-radius: 9999px; }
-.scroll-thin::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.5); }
-.dark .scroll-thin { scrollbar-color: rgba(255,255,255,0.1) transparent; }
-.dark .scroll-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
-.dark .scroll-thin::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+.scroll-thin::-webkit-scrollbar-thumb { background: rgba(201,165,90,0.2); border-radius: 9999px; }
+.scroll-thin::-webkit-scrollbar-thumb:hover { background: rgba(201,165,90,0.4); }
 
-/* ── Hide scrollbar (carousels) ───────────────────────────────────────────── */
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* ── Halftone background helper ───────────────────────────────────────────── */
+.ax-halftone {
+  position: absolute;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 5px 5px, var(--ax-halftone-color) 3.8px, transparent 4px);
+  background-size: 12px 12px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 0%, transparent 70%);
+          mask-image: radial-gradient(ellipse at center, #000 0%, transparent 70%);
+}
+
+/* ── Shimmer (used on upload progress) ───────────────────────────────────── */
+.shimmer-gold {
+  background: linear-gradient(90deg, transparent 0%, rgba(201,165,90,0.12) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
