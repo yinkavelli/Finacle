@@ -6,7 +6,7 @@ import { MessageSquare, X, Send, Bot, User } from "lucide-react";
 export function ChatWidget({ txList = [], currency = "AED" }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hi! I'm your Finacle AI Advisor. Ask me anything about your spending, income, or financial trends." }
+    { role: "assistant", content: "Hi! I'm your Axy Folio AI Advisor. Ask me anything about your spending, income, or financial trends." }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);

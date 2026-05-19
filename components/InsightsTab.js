@@ -71,7 +71,7 @@ export function InsightsTab({ txList, currency, onCategoryClick, userId }) {
   useEffect(() => {
     if (!userId) return;
     try {
-      const raw = localStorage.getItem(`finacle_budgets_${userId}`);
+      const raw = localStorage.getItem(`axy_folio_budgets_${userId}`);
       if (raw) setBudgets(JSON.parse(raw));
     } catch {}
   }, [userId]);

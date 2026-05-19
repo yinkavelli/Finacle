@@ -77,7 +77,17 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div style={{ marginBottom: 40, textAlign: "center" }}>
-          <img src="/logo-dark.png" alt="Finacle" style={{ height: 48, width: "auto", objectFit: "contain" }} />
+          <div style={{ display: "flex", alignItems: "baseline", gap: 1, justifyContent: "center", lineHeight: 1 }}>
+            <span style={{
+              fontFamily: "var(--ax-font-logo)",
+              fontWeight: 700, fontSize: 28, letterSpacing: "0.02em", color: "var(--ax-fg)",
+            }}>AXY</span>
+            <span style={{
+              fontFamily: "var(--ax-font-logo)",
+              fontWeight: 200, fontSize: 22, letterSpacing: "0.4em", textTransform: "uppercase",
+              color: "var(--ax-gold)", marginLeft: 4,
+            }}>FOLIO</span>
+          </div>
           <div style={{
             marginTop: 10, fontSize: 11, letterSpacing: "0.32em",
             color: "var(--ax-fg-muted)", textTransform: "uppercase", fontWeight: 500,
@@ -119,7 +129,7 @@ export default function LoginPage() {
             </div>
 
             <div style={{ textAlign: "center", fontSize: 13 }}>
-              <span style={{ color: "var(--ax-fg-muted)" }}>New to Finacle? </span>
+              <span style={{ color: "var(--ax-fg-muted)" }}>New to Axy Folio? </span>
               <button onClick={() => { setShowEmailForm(true); setIsSignUp(true); }} style={{
                 background: "transparent", border: "none",
                 color: "var(--ax-gold)", cursor: "pointer",

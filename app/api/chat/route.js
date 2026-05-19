@@ -41,7 +41,7 @@ ${context.recentTransactions
 `
       : "The user has not loaded any transaction data yet. Encourage them to upload a bank CSV statement to get started.";
 
-    const systemPrompt = `You are Finacle AI — a sharp, direct personal finance advisor for a UAE-based user.
+    const systemPrompt = `You are Axy Folio AI — a sharp, direct personal finance advisor for a UAE-based user.
 
 Rules:
 - Ground every answer in the financial data provided below. Never invent numbers.

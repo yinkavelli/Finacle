@@ -94,7 +94,7 @@ export function TransactionsTab({ txList, currency }) {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href     = url;
-    a.download = "finacle_transactions.csv";
+    a.download = "axy_folio_transactions.csv";
     a.click();
     URL.revokeObjectURL(url);
   };

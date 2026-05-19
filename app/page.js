@@ -202,6 +202,26 @@ function HealthPill({ status }) {
   );
 }
 
+// ── Wordmark ───────────────────────────────────────────────────────────────
+
+function AxyFolioWordmark({ height = 28 }) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 1, lineHeight: 1 }}>
+      <span style={{
+        fontFamily: "var(--ax-font-logo, 'Montserrat', 'Helvetica Neue', Arial, sans-serif)",
+        fontWeight: 700, fontSize: height * 0.75,
+        letterSpacing: "0.02em", color: "var(--ax-fg)",
+      }}>AXY</span>
+      <span style={{
+        fontFamily: "var(--ax-font-logo, 'Montserrat', 'Helvetica Neue', Arial, sans-serif)",
+        fontWeight: 200, fontSize: height * 0.65,
+        letterSpacing: "0.4em", textTransform: "uppercase",
+        color: "var(--ax-gold)", marginLeft: 4,
+      }}>FOLIO</span>
+    </div>
+  );
+}
+
 // ── Main export ────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -365,7 +385,7 @@ export default function Home() {
           <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="var(--ax-gold)" strokeWidth="2.5" strokeLinecap="round" />
         </svg>
         <p style={{ fontFamily: "var(--ax-font-display)", fontSize: 18, color: "var(--ax-fg-muted)", fontStyle: "italic", fontWeight: 300 }}>
-          Loading Finacle…
+          Loading Axy Folio…
         </p>
       </div>
     );
@@ -385,7 +405,7 @@ export default function Home() {
       }}>
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="/logo-dark.png" alt="Finacle" style={{ height: 28, width: "auto", objectFit: "contain" }} />
+          <AxyFolioWordmark />
         </div>
 
         {/* Actions */}

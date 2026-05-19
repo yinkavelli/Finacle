@@ -38,6 +38,7 @@
   /* Fonts */
   --ax-font-display:    "Cormorant Garamond", "Garamond", "Times New Roman", serif;
   --ax-font-body:       "DM Sans", "Helvetica Neue", Arial, sans-serif;
+  --ax-font-logo:       "Montserrat", "Helvetica Neue", Arial, sans-serif;
 
   /* Type scale */
   --ax-fs-eyebrow:      0.8rem;

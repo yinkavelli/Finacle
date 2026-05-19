@@ -49,7 +49,7 @@ export function BudgetTab({ txList, currency, userId }) {
   const [form, setForm]             = useState(EMPTY_FORM);
   const [hydrated, setHydrated]     = useState(false);
 
-  const storageKey = userId ? `finacle_budgets_${userId}` : null;
+  const storageKey = userId ? `axy_folio_budgets_${userId}` : null;
 
   useEffect(() => {
     if (!storageKey) return;
